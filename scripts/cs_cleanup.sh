@@ -1,8 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. SPDX-License-Identifier: MIT-0
 #!/bin/bash
 
-cd ~/environment/graviton2-labs/
 aws ssm delete-parameter --name "graviton_net_container_uri"
+aws ssm delete-parameter --name "graviton_lab_container_uri"
 kubectl delete all --all -n aspnet
 kubectl delete all --all -n multiarch
 aws ecr delete-repository --repository-name graviton2-pipeline-lab --force
