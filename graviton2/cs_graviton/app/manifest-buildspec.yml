@@ -1,0 +1,30 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH}
+      - ARM_TAG=${IMAGE_TAG}-arm64
+      - X86_TAG=${IMAGE_TAG}-x86
+      - echo $REPOSITORY_URI
+      - echo $IMAGE_TAG
+      - echo $X86_TAG
+      - echo $ARM_TAG
+      - REPOSITORY_URI=${REPO_ECR}
+      - export DOCKER_CLI_EXPERIMENTAL=enabled
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker manifest...
+      - docker manifest create $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$ARM_TAG $REPOSITORY_URI:$X86_TAG
+      - docker manifest annotate --arch arm64 $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$ARM_TAG
+      - docker manifest annotate --arch amd64 $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$X86_TAG
+      - docker manifest inspect $REPOSITORY_URI:$IMAGE_TAG
+      - docker manifest push $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build started on `date`

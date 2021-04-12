@@ -1,0 +1,66 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: multiarch
+  labels:
+    name: multiarch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: multiarch-service
+  namespace: multiarch
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+  labels:
+    app: multiarch-app
+spec:
+  selector:
+    app: multiarch-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multiarch-deployment
+  namespace: multiarch
+  labels:
+    app: multiarch-app
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: multiarch-app
+  template:
+    metadata:
+      labels:
+        app: multiarch-app
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - multiarch-app
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: multiarch-container
+        image: {{container_uri}} 
+        ports:
+        - containerPort: 80

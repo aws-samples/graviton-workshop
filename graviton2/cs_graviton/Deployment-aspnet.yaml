@@ -1,0 +1,65 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: aspnet
+  labels:
+    name: aspnet
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspnet-service
+  namespace: aspnet
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+  labels:
+    app: aspnet-app
+spec:
+  selector:
+    app: aspnet-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspnet-deployment
+  namespace: aspnet
+  labels:
+    app: aspnet-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aspnet-app
+  template:
+    metadata:
+      labels:
+        app: aspnet-app
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - arm64
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - aspnet-app
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: aspnet-container
+        image: {{container_uri}}  
+        ports:
+        - containerPort: 80
