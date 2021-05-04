@@ -1,6 +1,6 @@
-This project is designied to help you deploy services such as EKS, ECS, RDS, and EMR 
+This project is designed to help you deploy services such as EKS, ECS, RDS, and EMR 
 on Graviton2 instances.
-All the labs use AWS CDK for initial deployment and utiliza dedicated VPC.
+All the labs use AWS CDK for initial deployment and utilize dedicated VPC.
 
 Currently covered scenarios include :
 
@@ -10,5 +10,4 @@ Currently covered scenarios include :
 * CI pipeline for running .Net Core 5 on Amazon EKS cluster 
 * RDS migration scenario from MySQl 8 on m5 instance type to MySQL on m6g instance type
 * RDS migration scenario from MySQl 5 on m5 instance type ->  in-place major version upgrade  MySQL 8 ->  to in-place instance change to m6g instance type
-* EMR cluster with sample ETL Spark job` running on Graviton2 instance type
-
+* EMR cluster with sample ETL Spark job running on Graviton2 instance type
