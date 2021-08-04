@@ -38,6 +38,7 @@ setuptools.setup(
         "aws-cdk.aws-iam==1.99.0",
         "aws-cdk.aws-rds==1.99.0",
         "aws-cdk.aws-ssm==1.99.0",
+        "aws-cdk.aws-elasticache==1.99.0",
         "boto3",
         "awscli"
     ],
