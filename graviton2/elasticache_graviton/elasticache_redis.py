@@ -13,8 +13,46 @@ class CdkRedisStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         
+                
+        instance = self.create_bastion_instance(vpc)        
         
+        redis_elasticache = self.create_redis_cluster(vpc, instance)
+                                                        
+        core.CfnOutput( self, "MyBastionHostDNS", value = instance.instance_public_dns_name)
+        core.CfnOutput( self, "MyRedisClusterHost", value = redis_elasticache.attr_primary_end_point_address)                                                        
+        core.CfnOutput( self, "MyRedisClusterPort", value = redis_elasticache.attr_primary_end_point_port)
+
+    def create_redis_cluster(self, vpc, instance):
+        redis_security_group = ec2.SecurityGroup(self, "RedisSG", 
+                                                    vpc=vpc, 
+                                                    allow_all_outbound = True,
+                                                    description = "Security Group for Redis cluster"
+                                                )
+        redis_security_group.add_ingress_rule(ec2.Peer.ipv4(instance.instance_private_ip+"/32"), 
+                                                ec2.Port.tcp(6379), 
+                                                "Allow incoming traffic from Cloud9 instance"
+                                            )
+                                            
+        subnet_group =  elasticache.CfnSubnetGroup(self,"RedisSubnetGroup",
+                                                    description="Subnet Group for Redis ElastiCache Cluster",
+                                                    subnet_ids=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE).subnet_ids
+                                                )                                           
         
+        redis_elasticache = elasticache.CfnReplicationGroup(self,"MyRedisCache",
+                                                        replication_group_description="Redis Cluster for Graviton2 Workshop",
+                                                        cache_node_type="cache.m5.xlarge",
+                                                        engine="redis",
+                                                        automatic_failover_enabled=True,
+                                                        auto_minor_version_upgrade=False,
+                                                        security_group_ids=[redis_security_group.security_group_id],
+                                                        cache_subnet_group_name=subnet_group.ref,
+                                                        multi_az_enabled=True,
+                                                        num_cache_clusters=2
+                                                        )
+                                                        
+        return redis_elasticache
+
+    def create_bastion_instance(self, vpc):
         amzn_linux = ec2.MachineImage.latest_amazon_linux(
                                                         generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
                                                         edition=ec2.AmazonLinuxEdition.STANDARD,
@@ -45,37 +83,10 @@ class CdkRedisStack(core.Stack):
                                 vpc_subnets = ec2.SubnetSelection(subnets = (vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC).subnets)),
                                 security_group = bastion_security_group
                             )
+                            
+        userdata_file = open("scripts/redis-cli-install.sh", "r")
+        userdata = userdata_file.read()
+        instance.add_user_data(userdata)
+                            
+        return instance
         
-        
-        redis_security_group = ec2.SecurityGroup(self, "RedisSG", 
-                                                    vpc=vpc, 
-                                                    allow_all_outbound = True,
-                                                    description = "Security Group for Redis cluster"
-                                                )
-        redis_security_group.add_ingress_rule(ec2.Peer.ipv4(instance.instance_private_ip+"/32"), 
-                                                ec2.Port.tcp(6379), 
-                                                "Allow incoming traffic from Cloud9 instance"
-                                            )
-                                            
-        subnet_group =  elasticache.CfnSubnetGroup(self,"RedisSubnetGroup",
-                                                    description="Subnet Group for Redis ElastiCache Cluster",
-                                                    subnet_ids=vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE).subnet_ids
-                                                )                                           
-        
-        redis_elasticache = elasticache.CfnReplicationGroup(self,"MyRedisCache",
-                                                        replication_group_description="Redis Cluster for Graviton2 Workshop",
-                                                        cache_node_type="cache.m5.xlarge",
-                                                        engine="redis",
-                                                        automatic_failover_enabled=True,
-                                                        auto_minor_version_upgrade=False,
-                                                        security_group_ids=[redis_security_group.security_group_id],
-                                                        cache_subnet_group_name=subnet_group.ref,
-                                                        multi_az_enabled=True,
-                                                        num_cache_clusters=2
-                                                        )
-                                                        
-        core.CfnOutput( self, "MyBastionHostDNS", value = instance.instance_public_dns_name)
-        core.CfnOutput( self, "MyRedisClusterHost", value = redis_elasticache.attr_primary_end_point_address)                                                        
-        core.CfnOutput( self, "MyRedisClusterPort", value = redis_elasticache.attr_primary_end_point_port)
-                                                        
-    
