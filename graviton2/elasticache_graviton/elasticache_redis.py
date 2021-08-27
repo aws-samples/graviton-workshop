@@ -40,7 +40,7 @@ class CdkRedisStack(core.Stack):
         
         redis_elasticache = elasticache.CfnReplicationGroup(self,"MyRedisCache",
                                                         replication_group_description="Redis Cluster for Graviton2 Workshop",
-                                                        cache_node_type="cache.m5.xlarge",
+                                                        cache_node_type="cache.r5.large",
                                                         engine="redis",
                                                         automatic_failover_enabled=True,
                                                         auto_minor_version_upgrade=False,
