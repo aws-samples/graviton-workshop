@@ -16,13 +16,6 @@ class CdkRedisStack(core.Stack):
                 
         instance = self.create_bastion_instance(vpc)        
         
-        redis_elasticache = self.create_redis_cluster(vpc, instance)
-                                                        
-        core.CfnOutput( self, "MyBastionHostDNS", value = instance.instance_public_dns_name)
-        core.CfnOutput( self, "MyRedisClusterHost", value = redis_elasticache.attr_primary_end_point_address)                                                        
-        core.CfnOutput( self, "MyRedisClusterPort", value = redis_elasticache.attr_primary_end_point_port)
-
-    def create_redis_cluster(self, vpc, instance):
         redis_security_group = ec2.SecurityGroup(self, "RedisSG", 
                                                     vpc=vpc, 
                                                     allow_all_outbound = True,
@@ -50,7 +43,11 @@ class CdkRedisStack(core.Stack):
                                                         num_cache_clusters=2
                                                         )
                                                         
-        return redis_elasticache
+        core.CfnOutput( self, "MyBastionHostDNS", value = instance.instance_public_dns_name)
+        core.CfnOutput( self, "MyRedisClusterHost", value = redis_elasticache.attr_primary_end_point_address)                                                        
+        core.CfnOutput( self, "MyRedisClusterPort", value = redis_elasticache.attr_primary_end_point_port)
+        core.CfnOutput( self, "MyRedisClusterSecurityGroup", value = redis_security_group.security_group_id)
+        core.CfnOutput( self, "MyRedisClusterSubnetGroup", value = subnet_group.ref)
 
     def create_bastion_instance(self, vpc):
         amzn_linux = ec2.MachineImage.latest_amazon_linux(
