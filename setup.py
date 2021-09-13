@@ -34,12 +34,23 @@ setuptools.setup(
         "aws-cdk.aws-ecs==1.99.0",
         "aws-cdk.aws-eks==1.99.0",
         "aws-cdk.aws-elasticloadbalancingv2==1.99.0",
+        "aws-cdk.aws-elasticsearch==1.99.0",
         "aws-cdk.aws-emr==1.99.0",
+        "aws-cdk.aws-events==1.99.0",
+        "aws-cdk.aws-events-targets==1.99.0",
         "aws-cdk.aws-iam==1.99.0",
+        "aws-cdk.aws-lambda==1.99.0",
+        "aws-cdk.aws-lambda-python==1.99.0",
         "aws-cdk.aws-rds==1.99.0",
         "aws-cdk.aws-ssm==1.99.0",
         "boto3",
-        "awscli"
+        "awscli",
+
+        # Packages specifically required for the Elasticsearch module
+        "elasticsearch",
+        "requests",
+        "requests-aws4auth",
+        "Faker",
     ],
 
     python_requires=">=3.6",
