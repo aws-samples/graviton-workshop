@@ -18,23 +18,38 @@ class CdkElasticsearchStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
+                                            
+        es_security_group = ec2.SecurityGroup(
+            self, "ESSecurityGroup",
+            vpc=vpc,
+            allow_all_outbound=True
+        )
         
-        access_policy = iam.PolicyStatement(actions=['es:*'],
-                                            principals=[iam.AccountPrincipal(self.account)])
+        es_security_group.add_ingress_rule(
+            ec2.Peer.ipv4('10.0.0.0/16'),
+            ec2.Port.all_traffic()
+        )  
+        es_security_group.add_ingress_rule(
+            ec2.Peer.ipv4(c9_ip),
+            ec2.Port.all_traffic()
+        )  
         es_domain = es.Domain(self,
                               "Domain",
                               version=es.ElasticsearchVersion.V7_9,
                               vpc=vpc,
-                              # Since we only have 1 node, let's use the first private subnet in our VPC.
-                              vpc_subnets=[ec2.SubnetSelection(subnets=[vpc.private_subnets[0]])],
                               capacity={
                                   'data_node_instance_type': 'm5.large.elasticsearch',
-                                  'data_nodes': 1,
+                                  'data_nodes': 2,
                                   'master_nodes': 0,
                                   'warm_nodes': 0
                               },
-                              access_policies=[access_policy])
-        es_domain.connections.allow_from_any_ipv4(ec2.Port.all_traffic())
+                              zone_awareness= es.ZoneAwarenessConfig(
+                                  availability_zone_count=2
+                              ),
+                              vpc_subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType('PRIVATE'))],
+                              security_groups=[es_security_group],
+                              removal_policy=core.RemovalPolicy.DESTROY
+                              )
 
         insert_fn = PythonFunction(self,
                        "InsertIntoIndexFunction",
@@ -47,6 +62,7 @@ class CdkElasticsearchStack(core.Stack):
                            "ES_ENDPOINT": es_domain.domain_endpoint
                        },
                        timeout=core.Duration.minutes(1))
+        
         es_domain.grant_write(insert_fn.grant_principal)
 
         scheduled_rule = events.Rule(self,
@@ -54,5 +70,6 @@ class CdkElasticsearchStack(core.Stack):
                                       schedule=events.Schedule.expression('cron(* * ? * * *)'))
         scheduled_rule.add_target(events_targets.LambdaFunction(insert_fn))
 
+        core.CfnOutput(self, "LambdaName",value=insert_fn.function_name)
         core.CfnOutput(self, "DomainEndpoint", value=es_domain.domain_endpoint)
         core.CfnOutput(self, "DomainName", value=es_domain.domain_name)
