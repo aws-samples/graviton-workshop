@@ -39,8 +39,8 @@ class CdkPipelineStack(core.Stack):
         )
 
         source_output = codepipeline.Artifact()
-        docker_output_x86 = codepipeline.Artifact("ARM64_BuildOutput")
-        docker_output_arm64 = codepipeline.Artifact("x86_BuildOutput")
+        docker_output_x86 = codepipeline.Artifact("x86_BuildOutput")
+        docker_output_arm64 = codepipeline.Artifact("ARM64_BuildOutput")
         manifest_output = codepipeline.Artifact("ManifestOutput")
 
         buildspec_x86 = codebuild.BuildSpec.from_source_filename("x86-buildspec.yml")
