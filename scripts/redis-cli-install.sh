@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /home/ec2-user/
+cd /home/ec2-user/environment
 amazon-linux-extras install epel -y
 yum install gcc jemalloc-devel openssl-devel tcl tcl-devel -y
 wget http://download.redis.io/redis-stable.tar.gz
