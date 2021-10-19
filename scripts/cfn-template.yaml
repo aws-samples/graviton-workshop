@@ -1,0 +1,256 @@
+# https://github.com/awslabs/aws-cloudformation-templates
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  License: Apache-2.0
+Description: "Lab infrastructure template"
+Parameters:
+  AzName:
+    Description: Name of the AZ in which the placement group is to be created
+    Type: AWS::EC2::AvailabilityZone::Name
+    ConstraintDescription: must be the name of a valid EC2 AvailabilityZone.
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstanceTypeCnt:
+    Description: TestClient EC2 instance type
+    Type: String
+    Default: m5.large
+    AllowedValues: [m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge]
+    ConstraintDescription: must be a valid EC2 instance type.
+  InstanceTypeSut:
+    Description: TestServer EC2 instance type
+    Type: String
+    Default: m6g.medium
+    AllowedValues: [m6g.medium, m6g.large, m6g.xlarge, m6g.2xlarge, m6g.4xlarge]
+    ConstraintDescription: must be a valid EC2 instance type.
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  LatestAmiIdX86:
+    Description: The AMI to be used when creating a test client instance (x86_64)
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+  LatestAmiIdArm64:
+    Description: The AMI to be used when creating a test server instance (arm64)
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2"
+Resources:
+  # Add IAM permissions and roles: AmazonS3FullAccess, AmazonSSMManagedInstanceCore, CloudWatchFullAccess
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
+  ServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess"
+  # EC2 instance profile
+  InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - !Ref "ServiceRole"
+  # Cluster placement group
+  PlacementGroup:
+    Type: "AWS::EC2::PlacementGroup"
+    Properties:
+      Strategy: "cluster"
+  # Test client
+  EC2InstanceCnt:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: !Ref "InstanceTypeCnt"
+      UserData: !Base64 |
+        #!/bin/bash
+        sudo yum update -y
+        sudo yum install git -y
+        sudo yum groupinstall "Development Tools" -y
+        sudo yum install openssl-devel -y
+        git clone https://github.com/giltene/wrk2.git
+        make -C wrk2/
+        sudo cp wrk2/wrk /usr/local/bin/wrk
+        sudo amazon-linux-extras install -y python3.8
+        sudo alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+        python3 -m ensurepip --upgrade
+        python3 -m pip install matplotlib
+      # Adding instance profile
+      IamInstanceProfile: !Ref "InstanceProfile"
+      SecurityGroups:
+        - !Ref "InstanceSecurityGroupSsh"
+      KeyName: !Ref "KeyName"
+      ImageId: !Ref "LatestAmiIdX86"
+      PlacementGroupName: !Ref "PlacementGroup"
+      AvailabilityZone: !Ref "AzName"
+  # First SUT node
+  EC2InstanceSut1:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: !Ref "InstanceTypeSut"
+      UserData: !Base64 |
+        #!/bin/bash
+        sudo yum update -y
+        sudo yum install git -y
+        sudo amazon-linux-extras enable corretto8
+        sudo yum clean metadata
+        sudo yum install java-1.8.0-amazon-corretto-devel -y
+        sudo yum install java-11-amazon-corretto-headless -y
+        sudo update-alternatives --set java /usr/lib/jvm/java-1.8.0-amazon-corretto.aarch64/jre/bin/java
+        sudo yum install maven -y
+        sudo yum install amazon-cloudwatch-agent -y
+        cat <<EOF >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        {
+          "metrics": {
+            "metrics_collected": {
+              "mem": {
+                "measurement": [
+                  "mem_used_percent"
+                ],
+                "metrics_collection_interval":30
+              },
+              "swap": {
+                "measurement": [
+                  "swap_used_percent"
+                ],
+                "metrics_collection_interval":30
+              }
+            }
+          }
+        }
+        EOF
+        sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+          -a fetch-config \
+          -m ec2 \
+          -s \
+          -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+      # Adding instance profile
+      IamInstanceProfile: !Ref "InstanceProfile"
+      SecurityGroups:
+        - !Ref "InstanceSecurityGroupSsh"
+        - !Ref "InstanceSecurityGroupHttp"
+      KeyName: !Ref "KeyName"
+      ImageId: !Ref "LatestAmiIdArm64"
+      PlacementGroupName: !Ref "PlacementGroup"
+      AvailabilityZone: !Ref "AzName"
+  # Second SUT node
+  EC2InstanceSut2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: !Ref "InstanceTypeSut"
+      UserData: !Base64 |
+        #!/bin/bash
+        sudo yum update -y
+        sudo yum install git -y
+        sudo amazon-linux-extras enable corretto8
+        sudo yum clean metadata
+        sudo yum install java-1.8.0-amazon-corretto-devel -y
+        sudo yum install java-11-amazon-corretto-headless -y
+        sudo update-alternatives --set java /usr/lib/jvm/java-11-amazon-corretto.aarch64/bin/java
+        sudo yum install maven -y
+        sudo yum install amazon-cloudwatch-agent -y
+        cat <<EOF >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        {
+          "metrics": {
+            "metrics_collected": {
+              "mem": {
+                "measurement": [
+                  "mem_used_percent"
+                ],
+                "metrics_collection_interval":30
+              },
+              "swap": {
+                "measurement": [
+                  "swap_used_percent"
+                ],
+                "metrics_collection_interval":30
+              }
+            }
+          }
+        }
+        EOF
+        sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+          -a fetch-config \
+          -m ec2 \
+          -s \
+          -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+      # Adding instance profile
+      IamInstanceProfile: !Ref "InstanceProfile"
+      SecurityGroups:
+        - !Ref "InstanceSecurityGroupSsh"
+        - !Ref "InstanceSecurityGroupHttp"
+      KeyName: !Ref "KeyName"
+      ImageId: !Ref "LatestAmiIdArm64"
+      PlacementGroupName: !Ref "PlacementGroup"
+      AvailabilityZone: !Ref "AzName"
+  # Test client SG
+  InstanceSecurityGroupSsh:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref "SSHLocation"
+  # SUT node SG
+  InstanceSecurityGroupHttp:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: !Join ["/", [!GetAtt [EC2InstanceCnt, PublicIp], "32"]]
+Outputs:
+  InstanceIdCnt:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref "EC2InstanceCnt"
+  AZCnt:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceCnt", "AvailabilityZone"]
+  PublicDNSCnt:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceCnt", "PublicDnsName"]
+  PublicIPCnt:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceCnt", "PublicIp"]
+  InstanceIdSut1:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref "EC2InstanceSut1"
+  AZSut1:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceSut1", "AvailabilityZone"]
+  PublicDNSSut1:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceSut1", "PublicDnsName"]
+  PublicIPSut1:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceSut1", "PublicIp"]
+  InstanceIdSut2:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref "EC2InstanceSut2"
+  AZSut2:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceSut2", "AvailabilityZone"]
+  PublicDNSSut2:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceSut2", "PublicDnsName"]
+  PublicIPSut2:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt ["EC2InstanceSut2", "PublicIp"]
