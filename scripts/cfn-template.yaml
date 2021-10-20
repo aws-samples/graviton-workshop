@@ -79,6 +79,7 @@ Resources:
       UserData: !Base64 |
         #!/bin/bash
         sudo yum update -y
+        sudo yum install jq -y
         sudo yum install git -y
         sudo yum groupinstall "Development Tools" -y
         sudo yum install openssl-devel -y
@@ -95,7 +96,7 @@ Resources:
         - !Ref "InstanceSecurityGroupSsh"
       KeyName: !Ref "KeyName"
       ImageId: !Ref "LatestAmiIdX86"
-      PlacementGroupName: !Ref "PlacementGroup"
+      # PlacementGroupName: !Ref "PlacementGroup"
       AvailabilityZone: !Ref "AzName"
   # First SUT node
   EC2InstanceSut1:
@@ -145,7 +146,7 @@ Resources:
         - !Ref "InstanceSecurityGroupHttp"
       KeyName: !Ref "KeyName"
       ImageId: !Ref "LatestAmiIdArm64"
-      PlacementGroupName: !Ref "PlacementGroup"
+      # PlacementGroupName: !Ref "PlacementGroup"
       AvailabilityZone: !Ref "AzName"
   # Second SUT node
   EC2InstanceSut2:
@@ -195,7 +196,7 @@ Resources:
         - !Ref "InstanceSecurityGroupHttp"
       KeyName: !Ref "KeyName"
       ImageId: !Ref "LatestAmiIdArm64"
-      PlacementGroupName: !Ref "PlacementGroup"
+      # PlacementGroupName: !Ref "PlacementGroup"
       AvailabilityZone: !Ref "AzName"
   # Test client SG
   InstanceSecurityGroupSsh:
