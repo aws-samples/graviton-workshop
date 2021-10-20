@@ -1,0 +1,27 @@
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/tmp/vertx.log",
+            "log_group_name": "/vertx-logging",
+            "log_stream_name": "vertx-logging-{instance_id}.log",
+            "timestamp_format": "%Y-%m-%d %H:%M:%S.%f",
+            "multi_line_start_pattern": "{timestamp_format}"
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "metrics_collected": {
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
+        ],
+        "metrics_collection_interval":30
+      }
+    }
+  }
+}
