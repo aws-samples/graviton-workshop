@@ -30,7 +30,7 @@ class CdkEksStack(core.Stack):
 
         
         self.cluster = eks.Cluster(self, "EKSGraviton2",
-            version=eks.KubernetesVersion.V1_18,
+            version=eks.KubernetesVersion.V1_20,
             default_capacity=0,
             endpoint_access=eks.EndpointAccess.PUBLIC_AND_PRIVATE,
             vpc=vpc,
