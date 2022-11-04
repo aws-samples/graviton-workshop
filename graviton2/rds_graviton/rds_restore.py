@@ -17,7 +17,7 @@ class CdkRdsRestoreStack(core.Stack):
         snapshot_id = ssm.StringParameter.value_for_string_parameter(self ,"graviton_rds_lab_snapshot")
         g2_db_mysql8 = rds.DatabaseInstanceFromSnapshot(self, "GravitonMySQL",
                                              engine=rds.DatabaseInstanceEngine.mysql(
-                                                 version=rds.MysqlEngineVersion.VER_8_0_21
+                                                 version=rds.MysqlEngineVersion.VER_8_0_23
                                              ),
                                              instance_type=ec2.InstanceType("m6g.4xlarge"),
                                              snapshot_identifier=snapshot_id,
