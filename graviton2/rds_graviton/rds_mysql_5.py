@@ -14,7 +14,7 @@ class CdkRds5Stack(core.Stack):
 
         db_mysql5 = rds.DatabaseInstance(self, "MySQL5",
                                              engine=rds.DatabaseInstanceEngine.mysql(
-                                                 version=rds.MysqlEngineVersion.VER_5_7_31
+                                                 version=rds.MysqlEngineVersion.VER_5_7_33
                                              ),
                                              instance_type=ec2.InstanceType("m5.4xlarge"),
                                              vpc=vpc,
