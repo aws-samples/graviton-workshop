@@ -1,15 +1,16 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. SPDX-License-Identifier: MIT-0
 
-from aws_cdk import core
+import aws_cdk as cdk
+from constructs import Construct
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_rds as rds
 import os
 
 c9_ip = os.environ["C9_HOSTNAME"] + '/32'
 
-class CdkRds5Stack(core.Stack):
+class CdkRds5Stack(cdk.Stack):
 
-    def __init__(self, scope: core.Construct, id: str, vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         db_mysql5 = rds.DatabaseInstance(self, "MySQL5",
@@ -26,7 +27,7 @@ class CdkRds5Stack(core.Stack):
                                              deletion_protection=False,
                                              enable_performance_insights=True,
                                              delete_automated_backups=True,
-                                             backup_retention=core.Duration.days(1),
+                                             backup_retention=cdk.Duration.days(1),
                                              vpc_subnets={
                                                  "subnet_type": ec2.SubnetType.PUBLIC
                                              },
@@ -37,5 +38,5 @@ class CdkRds5Stack(core.Stack):
                                              )
         db_mysql5.connections.allow_default_port_from(ec2.Peer.ipv4(c9_ip), "Cloud9 MySQL Access")
 
-        core.CfnOutput( self, "MySQL5RDSInstanceId", value = db_mysql5.instance_identifier)
-        core.CfnOutput( self, "MySQL5SecretArn", value = db_mysql5.secret.secret_arn)
+        cdk.CfnOutput( self, "MySQL5RDSInstanceId", value = db_mysql5.instance_identifier)
+        cdk.CfnOutput( self, "MySQL5SecretArn", value = db_mysql5.secret.secret_arn)
