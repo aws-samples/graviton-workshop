@@ -28,7 +28,8 @@ class CdkPipelineStack(cdk.Stack):
             scope=self,
             id=f"{name}-container-git",
             repository_name=f"{name}",
-            description=f"Application code"
+            description=f"Application code",
+            code=codecommit.Code.from_directory('./graviton2/cs_graviton/app', 'develop')
         )
 
         pipeline = codepipeline.Pipeline(
@@ -108,7 +109,7 @@ class CdkPipelineStack(cdk.Stack):
             action_name="CodeCommit_Source",
             repository=codecommit_repo,
             output=source_output,
-            branch="master"
+            branch="develop"
         )
 
         pipeline.add_stage(
