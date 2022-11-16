@@ -13,7 +13,7 @@ import os
 
 class CdkPipelineDotNetStack(cdk.Stack):
 
-    def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         name = "graviton2-aspnet-lab"

@@ -1,0 +1,713 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  This stack creates many of the resources needed to complete the Graviton
+  Workshop (https://graviton2-workshop.workshop.aws/). It creates all the
+  necessary Amazon VPC resources, an Amazon EKS and Amazon OpenSearch cluster,
+  and a Cloud9 instance on which the exercises can be performed.
+
+  **WARNING: Anyone who logs into the provisioned Cloud9 environment will be
+  granted Administrator access to the entire AWS account in which this stack is
+  deployed.** This will provide complete control over all resources in the
+  account, subject to any Service Control Policies that might be applied if the
+  account is part of an AWS Organization. Therefore, **we recommend deploying this
+  stack only into a non-production sandbox account that contains no sensitive
+  data.**
+
+  By deploying this stack, you agree that you understand and assume the risks
+  associated with doing so, and further agree that AWS is not responsible for
+  any harm, foreseeable or otherwise, that may result.
+
+Parameters:
+  IHaveReadTheDescriptionAndAssumeTheRisks:
+    Type: String
+    Description: >
+      Acknowledge you have read and understand the description and assume the
+      risks of provisioning this stack by setting this value to "yes".
+    AllowedValues:
+      - "yes"
+  EETeamRoleArn:
+    Type: String
+    Description: >
+      Specifies the Team Role that is assumed by the event participant in their
+      AWS account. Only supplied by Event Engine and Workshop Studio.
+    Default: ""
+  IsWorkshopStudioEnv:
+    Type: String
+    Default: "no"
+    AllowedValues:
+      - "no"
+      - "yes"
+    Description: >
+      Whether this stack is being deployed in a Workshop Studio environment or
+      not. If not sure, leave as default of "no".
+  EventEngineRoleSessionName:
+    Type: String
+    Default: MasterKey
+    AllowedValues:
+      - MasterKey
+  WorkshopStudioRoleSessionName:
+    Type: String
+    Default: Participant
+    AllowedValues:
+      - Participant
+  Cloud9InstanceType:
+    Type: String
+    Default: t3.medium
+  Cloud9InstanceVolumeSize:
+    Type: Number
+    Default: 30
+    MinValue: 8
+  X86ContainerInstanceType:
+    Type: String
+    Default: t3.medium
+  GravitonContainerInstanceType:
+    Type: String
+    Default: t4g.medium
+  OpenSearchX86InstanceType:
+    Type: String
+    Default: m5.large.search
+
+Conditions:
+  IsWorkshopStudioSession: !Equals [!Ref IsWorkshopStudioEnv, "yes"]
+  IsEventEngineSession: !And
+    - !Not [!Condition IsWorkshopStudioSession]
+    - !Not [!Equals [!Ref EETeamRoleArn, ""]]
+  IsAWSHostedSession:
+    !Or [!Condition IsWorkshopStudioSession, !Condition IsEventEngineSession]
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshop
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshop
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshop-NATGW
+
+  # Public subnets
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshopPublic
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref InternetGateway
+      DestinationCidrBlock: "0.0.0.0/0"
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ""
+      CidrBlock: "10.0.0.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshopPublic0
+        - Key: kubernetes.io/role/elb
+          Value: 1
+  PublicSubnet0RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet0
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ""
+      CidrBlock: "10.0.1.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshopPublic1
+        - Key: kubernetes.io/role/elb
+          Value: 1
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet0
+
+  # Private subnets
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshopPrivate
+  PrivateDefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      NatGatewayId: !Ref NATGateway
+      DestinationCidrBlock: "0.0.0.0/0"
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ""
+      CidrBlock: "10.0.128.0/19"
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshopPrivate0
+        - Key: kubernetes.io/role/internal-elb
+          Value: 1
+  PrivateSubnet0RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet0
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ""
+      CidrBlock: "10.0.160.0/19"
+      Tags:
+        - Key: Name
+          Value: GravitonWorkshopPrivate1
+        - Key: kubernetes.io/role/internal-elb
+          Value: 1
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
+
+  #
+  # EKS Cluster Components
+  #
+
+  EKSClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: !Sub eks.${AWS::URLSuffix}
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEKSClusterPolicy
+
+  EKSClusterCreatorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: !Sub lambda.${AWS::URLSuffix}
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - eks:DescribeCluster
+                  - eks:DeleteCluster
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource: !GetAtt Cloud9SSMAccessRole.Arn
+          PolicyName: CreateEKSCluster
+
+  EKSClusterCreatorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt EKSClusterCreatorRole.Arn
+      Architectures:
+        - arm64
+      Runtime: python3.9
+      Handler: index.handler
+      Timeout: 900
+      Code:
+        ZipFile: |
+          import cfnresponse
+          import boto3
+          import json
+          import random
+          import string
+
+          def handler(event, context):
+              print("REQUEST RECEIVED: \n" + json.dumps(event))
+
+              try:
+                  if event['RequestType'] == 'Delete':
+                      eks = boto3.client('eks')
+                      eks.delete_cluster(name=event['PhysicalResourceId'])
+                      waiter = eks.get_waiter('cluster_deleted')
+                      waiter.wait(name=event['PhysicalResourceId'])
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return
+
+                  ## This is why we need a Custom Resource: so that the role we created for
+                  ## the Cloud9 instance can be used to create the EKS cluster, instead of
+                  ## the IAM principal that created the stack (which would be used by the
+                  ## CloudFormation service).
+
+                  sts = boto3.client('sts')
+                  response = sts.assume_role(
+                      RoleArn=event['ResourceProperties']['CreatorRoleArn'],
+                      RoleSessionName='Creator'
+                  )
+                  eks = boto3.client('eks',
+                                    aws_access_key_id=response['Credentials']['AccessKeyId'],
+                                    aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+                                    aws_session_token=response['Credentials']['SessionToken']
+                                    )
+
+                  cluster_name = event['LogicalResourceId'] + '-' + \
+                      ''.join(random.choice(string.ascii_letters + string.digits)
+                              for i in range(12))
+
+                  print('Creating cluster ' + cluster_name)
+                  response = eks.create_cluster(
+                      name=cluster_name,
+                      version='1.24',
+                      roleArn=event['ResourceProperties']['ClusterRoleArn'],
+                      resourcesVpcConfig={
+                          'subnetIds': event['ResourceProperties']['SubnetIds'],
+                          'endpointPublicAccess': False,
+                          'endpointPrivateAccess': True
+                      },
+                      logging={
+                          'clusterLogging': [
+                              {
+                                  'types': [
+                                      'api', 'audit', 'authenticator', 'controllerManager', 'scheduler',
+                                  ],
+                                  'enabled': True
+                              },
+                          ]
+                      }
+                  )
+
+                  print('Waiting for cluster to become active...')
+                  waiter = eks.get_waiter('cluster_active')
+                  waiter.wait(name=cluster_name)
+                  response = eks.describe_cluster(name=cluster_name)
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {
+                      'OpenIdConnectIssuerUrl': response['cluster']['identity']['oidc']['issuer'],
+                      'ClusterSecurityGroupId': response['cluster']['resourcesVpcConfig']['clusterSecurityGroupId'],
+                      'CertificateAuthorityData': response['cluster']['certificateAuthority']['data'],
+                      'Endpoint': response['cluster']['endpoint']
+                  }, cluster_name)
+              except Exception as err:
+                  print(err)
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {})
+
+  EKSCluster:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt EKSClusterCreatorFunction.Arn
+      CreatorRoleArn: !GetAtt Cloud9SSMAccessRole.Arn
+      ClusterRoleArn: !GetAtt EKSClusterRole.Arn
+      SubnetIds:
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+
+  EKSNodegroupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: !Sub ec2.${AWS::URLSuffix}
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  EKSNodegroupX86:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref EKSCluster
+      NodeRole: !GetAtt EKSNodegroupRole.Arn
+      Subnets:
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+      AmiType: AL2_x86_64
+      CapacityType: ON_DEMAND
+      InstanceTypes:
+        - !Ref X86ContainerInstanceType
+      ScalingConfig:
+        DesiredSize: 2
+        MinSize: 1
+        MaxSize: 3
+
+  EKSNodegroupArm64:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref EKSCluster
+      NodeRole: !GetAtt EKSNodegroupRole.Arn
+      Subnets:
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+      AmiType: AL2_ARM_64
+      CapacityType: ON_DEMAND
+      InstanceTypes:
+        - !Ref GravitonContainerInstanceType
+      ScalingConfig:
+        DesiredSize: 2
+        MinSize: 1
+        MaxSize: 3
+
+  # OIDC provider (for EKS IAM Roles for Service Accounts)
+  ThumbprintExtractorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: !Sub lambda.${AWS::URLSuffix}
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  ThumbprintExtractorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt ThumbprintExtractorRole.Arn
+      Architectures:
+        - arm64
+      Runtime: nodejs16.x
+      Handler: index.handler
+      Timeout: 10
+      Code:
+        ZipFile: |
+          const response = require('cfn-response');
+          const tls = require('tls');
+          const url = require('url');
+
+          exports.handler = function (event, context) {
+              console.log("REQUEST RECEIVED:\n" + JSON.stringify(event));
+              if (event.RequestType === 'Delete') {
+                  response.send(event, context, 'SUCCESS');
+                  return;
+              }
+              const parsedUrl = url.parse(event.ResourceProperties.Url);
+              const socket = tls.connect({
+                  host: parsedUrl.host,
+                  port: parsedUrl.port || 443,
+                  rejectUnauthorized: false,
+              });
+              socket.on('secureConnect', () => {
+                  let cert = socket.getPeerCertificate(true);
+                  // Obtain the last **intermediate** certificate in the chain
+                  // See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc_verify-thumbprint.html
+                  while (cert.issuerCertificate.issuerCertificate !== cert.issuerCertificate) {
+                      cert = cert.issuerCertificate;
+                  }
+                  socket.destroy();
+                  response.send(event, context, 'SUCCESS', {
+                      Fingerprint: cert.fingerprint.replace(/:/g, '')
+                  });
+              });
+          }
+
+  ThumbprintExtractorCustomResource:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt ThumbprintExtractorFunction.Arn
+      Url: !GetAtt EKSCluster.OpenIdConnectIssuerUrl
+
+  OIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: !GetAtt EKSCluster.OpenIdConnectIssuerUrl
+      ClientIdList:
+        - !Sub sts.${AWS::URLSuffix}
+      ThumbprintList:
+        - !GetAtt ThumbprintExtractorCustomResource.Fingerprint
+
+  #
+  # Prepare Cloud9 instance
+  #
+  AllowCloud9ToAccessCluster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow connections from Cloud9 instance
+      IpProtocol: tcp
+      GroupId: !GetAtt EKSCluster.ClusterSecurityGroupId
+      CidrIp: !GetAtt VPC.CidrBlock
+      FromPort: 443
+      ToPort: 443
+
+  #
+  # OpenSearch Cluster
+  #
+  OpenSearchServiceLinkedRole:
+    Type: AWS::IAM::ServiceLinkedRole
+    Properties:
+      AWSServiceName: opensearchservice.amazonaws.com
+
+  OpenSearchClusterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: OpenSearch Cluster
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: "0.0.0.0/0"
+
+  AllowCloud9ToAccessOpenSearch:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow connections from Cloud9 instance
+      IpProtocol: "-1"
+      GroupId: !Ref OpenSearchClusterSecurityGroup
+      CidrIp: !GetAtt VPC.CidrBlock
+
+  OpenSearchDomain:
+    Type: AWS::OpenSearchService::Domain
+    DependsOn: OpenSearchServiceLinkedRole
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      EngineVersion: Elasticsearch_7.9
+      ClusterConfig:
+        InstanceType: !Ref OpenSearchX86InstanceType
+        InstanceCount: 2
+        ZoneAwarenessEnabled: true
+        ZoneAwarenessConfig:
+          AvailabilityZoneCount: 2
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 10
+        VolumeType: gp3
+      VPCOptions:
+        SubnetIds:
+          - !Ref PrivateSubnet0
+          - !Ref PrivateSubnet1
+        SecurityGroupIds:
+          - !Ref OpenSearchClusterSecurityGroup
+
+  #
+  # Cloud9 environment
+  #
+
+  # Taken from https://docs.aws.amazon.com/cloud9/latest/user-guide/ec2-ssm.html#creating-cfn-instance-profile
+  Cloud9SSMAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AWSCloud9SSMAccessRole # DO NOT CHANGE
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloud9.amazonaws.com
+                - ec2.amazonaws.com
+              AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+            Action: sts:AssumeRole
+      Description: "Service linked role for AWS Cloud9"
+      Path: "/service-role/"
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AWSCloud9SSMInstanceProfile
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AdministratorAccess
+
+  Cloud9SSMInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      InstanceProfileName: AWSCloud9SSMInstanceProfile # DO NOT CHANGE
+      Path: "/cloud9/"
+      Roles:
+        - Ref: Cloud9SSMAccessRole
+
+  Cloud9Environment:
+    Type: AWS::Cloud9::EnvironmentEC2
+    DependsOn:
+      - Cloud9SSMInstanceProfile
+    Properties:
+      Description: Graviton Workshop
+      InstanceType: !Ref Cloud9InstanceType
+      ConnectionType: CONNECT_SSM
+      AutomaticStopTimeMinutes: 60
+      # Currently needs to be public in order for Cloud9 temporary managed credentials to work
+      # See https://docs.aws.amazon.com/cloud9/latest/user-guide/security-iam.html#auth-and-access-control-temporary-managed-credentials
+      SubnetId: !Ref PublicSubnet0
+      ImageId: amazonlinux-2-x86_64
+      OwnerArn: !If
+        - IsAWSHostedSession
+        - !Join
+          - ""
+          - - "arn:"
+            - !Ref AWS::Partition
+            - ":sts::"
+            - !Ref AWS::AccountId
+            - ":assumed-role/"
+            - !Select
+              - 1
+              - !Split
+                - "/"
+                - !Ref EETeamRoleArn
+            - "/"
+            - !If
+              - IsWorkshopStudioSession
+              - !Ref WorkshopStudioRoleSessionName
+              - !Ref EventEngineRoleSessionName
+        - !Ref AWS::NoValue
+
+  Cloud9InitializerDocument:
+    Type: AWS::SSM::Document
+    Properties:
+      DocumentType: Command
+      DocumentFormat: YAML
+      Content:
+        schemaVersion: "2.2"
+        description: Bootstrap Cloud9 Instance
+        mainSteps:
+          - action: aws:runShellScript
+            name: SetupCloud9Environment
+            inputs:
+              timeoutSeconds: "600"
+              runCommand:
+                - "#!/bin/bash -xe"
+                - echo LANG=en_US.UTF-8 >> /etc/environment
+                - echo LC_ALL=en_US.UTF-8 >> /etc/environment
+                ### Update ec2-user .bash_profile
+                - !Sub su -l -c 'echo "export AWS_ACCOUNT_ID=${AWS::AccountId}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export AWS_DEFAULT_REGION=${AWS::Region}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export CDK_DEPLOY_ACCOUNT=${AWS::AccountId}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export CDK_DEPLOY_REGION=${AWS::Region}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export AWS_REGION=${AWS::Region}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export EKS_CLUSTER=${EKSCluster}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export ES_DOMAIN_NAME=${OpenSearchDomain}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export ES_ENDPOINT=https://${OpenSearchDomain.DomainEndpoint}" >> ~/.bash_profile' ec2-user
+                - !Sub su -l -c 'echo "export VPC_ID=${VPC}" >> ~/.bash_profile' ec2-user
+                ### Install newest aws cli from pip, packaged version of awscli does not have switch to disable managed temporary credentials ###
+                - curl -sSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip
+                - (cd /tmp && unzip -q awscliv2.zip && ./aws/install)
+                - rm -rf /tmp/awscliv2.zip /tmp/aws
+                ### Log into ECR
+                - !Sub su -l -c 'aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com' ec2-user
+                ### Install kubectl
+                - curl -sSL -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.7/2022-10-31/bin/linux/amd64/kubectl
+                - chmod +x /tmp/kubectl
+                - mv /tmp/kubectl /usr/local/bin/kubectl
+                - /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl
+                - su -l -c 'echo "alias k=kubectl" >> ~/.bash_profile' ec2-user
+                - su -l -c 'echo "complete -F __start_kubectl k" >> ~/.bash_profile' ec2-user
+                ### Update kubeconfig
+                - !Sub su -l -c 'aws eks update-kubeconfig --name ${EKSCluster} --region ${AWS::Region}' ec2-user
+                ### Install eksctl
+                - curl -sSL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+                - chmod +x /tmp/eksctl
+                - mv /tmp/eksctl /usr/local/bin
+                - /usr/local/bin/eksctl completion bash > /etc/bash_completion.d/eksctl
+                ### Install Helm
+                - curl -fsSL -o /tmp/helm.tgz https://get.helm.sh/helm-v3.7.1-linux-amd64.tar.gz
+                - tar -C /tmp -xzf /tmp/helm.tgz
+                - mv /tmp/linux-amd64/helm /usr/local/bin/helm
+                - rm -rf /tmp/helm.tgz /tmp/linux-amd64
+                ### Install Graviton Workshop packages (see Prerequisites chapter)
+                - yum -y install jq gettext bash-completion moreutils
+                - rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+                - yum -y localinstall https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+                - yum -y install mysql-community-client mysql-community-libs
+                ### Resize volume
+                - instance_id=$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)
+                - !Sub volume_id=$(aws --region ${AWS::Region} ec2 describe-volumes --filters Name=attachment.instance-id,Values=${!instance_id} --query 'Volumes[0].VolumeId' --output text)
+                - !Sub aws --region ${AWS::Region} ec2 modify-volume --volume-id ${!volume_id} --size ${Cloud9InstanceVolumeSize}
+                ### Configure .bash_profile to disable Cloud9 managed credentials
+                - !Sub su -l -c 'echo "aws cloud9 update-environment --environment-id \$C9_PID --managed-credentials-action DISABLE --region ${AWS::Region} &> /dev/null" >> /home/ec2-user/.bash_profile' ec2-user
+                - su -l -c 'echo "rm -vf ${HOME}/.aws/credentials" >> ~/.bash_profile' ec2-user
+                - rm -vf /home/ec2-user/.aws/credentials
+                ### Reboot instance. This must be the last line - do not add any lines after this!
+                - shutdown -r 1
+
+  Cloud9SSMAssociation:
+    Type: AWS::SSM::Association
+    Properties:
+      Name: !Ref Cloud9InitializerDocument
+      OutputLocation:
+        S3Location:
+          OutputS3BucketName: !Ref SSMOutputBucket
+      Targets:
+        - Key: tag:aws:cloud9:environment
+          Values:
+            - Ref: Cloud9Environment
+
+  SSMOutputBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+
+###########
+
+Outputs:
+  OpenSearchEndpoint:
+    Description: OpenSearch endpoint
+    Value: !Sub "https://${OpenSearchDomain.DomainEndpoint}"
+
+  OpenSearchDomainName:
+    Description: OpenSearch domain name
+    Value: !Ref OpenSearchDomain
+
+  EKSClusterName:
+    Description: EKS cluster name
+    Value: !Ref EKSCluster
+
+  RisksAcknowledgedAndAssumed:
+    Description: Stack deployer has acknowledged and assumes the risk described in the Description
+    Value: !Ref IHaveReadTheDescriptionAndAssumeTheRisks
+
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPC

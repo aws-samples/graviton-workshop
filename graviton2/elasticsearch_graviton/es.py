@@ -9,48 +9,24 @@ import aws_cdk.aws_events_targets as events_targets
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda as _lambda
 from aws_cdk.aws_lambda_python_alpha import PythonFunction
-import os
 
-c9_ip = os.environ["C9_HOSTNAME"] + '/32'
 
 class CdkElasticsearchStack(cdk.Stack):
-    """A stack containing a basic Amazon Elasticsearch domain running on the
-    x86 architecture."""
+    """Creates a scheduled Lambda function that inserts documents into the supplied
+    ElasticSearch domain."""
 
-    def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, vpc_id: str, es_domain: str, es_endpoint: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        es_security_group = ec2.SecurityGroup(
-            self, "ESSecurityGroup",
-            vpc=vpc,
-            allow_all_outbound=True
-        )
+        vpc = ec2.Vpc.from_lookup(self, 'VPC', vpc_id=vpc_id)
 
-        es_security_group.add_ingress_rule(
-            ec2.Peer.ipv4('10.0.0.0/16'),
-            ec2.Port.all_traffic()
-        )
-        es_security_group.add_ingress_rule(
-            ec2.Peer.ipv4(c9_ip),
-            ec2.Port.all_traffic()
-        )
-        es_domain = es.Domain(self,
-                              "Domain",
-                              version=es.ElasticsearchVersion.V7_9,
-                              vpc=vpc,
-                              capacity={
-                                  'data_node_instance_type': 'm5.large.elasticsearch',
-                                  'data_nodes': 2,
-                                  'master_nodes': 0,
-                                  'warm_nodes': 0
-                              },
-                              zone_awareness= es.ZoneAwarenessConfig(
-                                  availability_zone_count=2
-                              ),
-                              vpc_subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS)],
-                              security_groups=[es_security_group],
-                              removal_policy=cdk.RemovalPolicy.DESTROY
-                              )
+        es_domain = es.Domain.from_domain_attributes(self, 'Domain',
+            domain_arn=cdk.Stack.of(self).format_arn(
+                service='es',
+                resource='domain',
+                resource_name=es_domain
+            ),
+            domain_endpoint=es_endpoint)
 
         insert_fn = PythonFunction(self,
                        "InsertIntoIndexFunction",
@@ -72,5 +48,3 @@ class CdkElasticsearchStack(cdk.Stack):
         scheduled_rule.add_target(events_targets.LambdaFunction(insert_fn))
 
         cdk.CfnOutput(self, "LambdaName",value=insert_fn.function_name)
-        cdk.CfnOutput(self, "DomainEndpoint", value=es_domain.domain_endpoint)
-        cdk.CfnOutput(self, "DomainName", value=es_domain.domain_name)

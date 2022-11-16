@@ -11,9 +11,10 @@ import os
 
 class CdkEcsStack(cdk.Stack):
 
-    def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, vpc_id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        vpc = ec2.Vpc.from_lookup(self, 'VPC', vpc_id=vpc_id)
 
         cluster = ecs.Cluster(
             self, 'ECSGraviton2',

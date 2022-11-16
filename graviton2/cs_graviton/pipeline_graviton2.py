@@ -8,12 +8,11 @@ import aws_cdk.aws_codecommit as codecommit
 import aws_cdk.aws_codepipeline as codepipeline
 import aws_cdk.aws_codebuild as codebuild
 import aws_cdk.aws_codepipeline_actions as codepipeline_actions
-import os
 
 
 class CdkPipelineStack(cdk.Stack):
 
-    def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         name = "graviton2-pipeline-lab"
