@@ -2,7 +2,7 @@
 
 #!/usr/bin/env python3
 
-from aws_cdk import core
+import aws_cdk as cdk
 from graviton2.rds_graviton.rds_mysql_5 import CdkRds5Stack
 from graviton2.rds_graviton.rds_mysql_8 import CdkRds8Stack
 from graviton2.rds_graviton.rds_restore import CdkRdsRestoreStack
@@ -15,9 +15,9 @@ from graviton2.elasticsearch_graviton.es import CdkElasticsearchStack
 #from graviton2.emr_graviton.emr_graviton2 import CdkEmrStack
 
 
-class GravitonID(core.App):
+class GravitonID(cdk.App):
 
-        def __init__(self, **kwargs): 
+        def __init__(self, **kwargs):
             super().__init__(**kwargs)
 
             self.stack_name = "GravitonID"
