@@ -8,3 +8,7 @@ __pycache__
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+#workshop sub-repos
+dotnet-docker
+test_db
