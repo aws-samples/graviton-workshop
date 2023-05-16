@@ -15,7 +15,7 @@ class CdkRds8Stack(cdk.Stack):
 
         db_mysql8 = rds.DatabaseInstance(self, "MySQL8",
                                              engine=rds.DatabaseInstanceEngine.mysql(
-                                                 version=rds.MysqlEngineVersion.VER_8_0_23
+						 version=rds.MysqlEngineVersion.of('8.0.31','8.0')
                                              ),
                                              instance_type=ec2.InstanceType("m5.4xlarge"),
                                              vpc=vpc,
