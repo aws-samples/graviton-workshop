@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. SPDX-License-Identifier: MIT-0
 #
 # This lambda function inserts random data into an index named "people" within 
-# an Amazon Elasticsearch cluster specified by the user. The function will do
+# an Amazon OpenSearch cluster specified by the user. The function will do
 # several insertions before exiting.
 
 import argparse
@@ -17,7 +17,7 @@ from faker import Faker
 from requests_aws4auth import AWS4Auth
 
 
-endpoint = os.environ['ES_ENDPOINT']
+endpoint = os.environ['OS_ENDPOINT']
 region = os.environ['AWS_REGION']
 
 
@@ -46,7 +46,7 @@ def handler(event, context):
             print("Indexed with ID '%s'" % result['_id'])
     
         except ConnectionTimeout as e:
-            print("Connection to the ES cluster timed out: %s" % str(e))
+            print("Connection to the OS cluster timed out: %s" % str(e))
         
         except Exception as e:
             print("Unexpected exception caught: %s" % str(e))
