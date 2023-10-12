@@ -55,6 +55,8 @@ class CdkPipelineStack(cdk.Stack):
             environment_variables={
                 'REPO_ECR': codebuild.BuildEnvironmentVariable(
                     value=container_repository.repository_uri),
+                'AWS_ACCOUNT_ID': codebuild.BuildEnvironmentVariable(
+                    value=self.account)
             },
             build_spec=buildspec_x86
         )
@@ -68,6 +70,8 @@ class CdkPipelineStack(cdk.Stack):
             environment_variables={
                 'REPO_ECR': codebuild.BuildEnvironmentVariable(
                     value=container_repository.repository_uri),
+                'AWS_ACCOUNT_ID': codebuild.BuildEnvironmentVariable(
+                    value=self.account)
             },
             build_spec=buildspec_arm64
         )
@@ -81,6 +85,8 @@ class CdkPipelineStack(cdk.Stack):
             environment_variables={
                 'REPO_ECR': codebuild.BuildEnvironmentVariable(
                     value=container_repository.repository_uri),
+                'AWS_ACCOUNT_ID': codebuild.BuildEnvironmentVariable(
+                    value=self.account)
             },
             build_spec=buildspec_manifest
         )
