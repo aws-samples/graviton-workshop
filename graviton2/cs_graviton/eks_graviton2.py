@@ -6,8 +6,6 @@ import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_eks as eks
 import os
 
-c9_ip = os.environ["C9_HOSTNAME"] + '/32'
-
 class CdkEksStack(cdk.Stack):
 
     def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
@@ -22,10 +20,6 @@ class CdkEksStack(cdk.Stack):
 
         eks_security_group.add_ingress_rule(
             ec2.Peer.ipv4('10.0.0.0/16'),
-            ec2.Port.all_traffic()
-        )
-        eks_security_group.add_ingress_rule(
-            ec2.Peer.ipv4(c9_ip),
             ec2.Port.all_traffic()
         )
 

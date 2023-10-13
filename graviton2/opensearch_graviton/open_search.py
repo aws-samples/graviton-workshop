@@ -11,8 +11,6 @@ import aws_cdk.aws_lambda as _lambda
 from aws_cdk.aws_lambda_python_alpha import PythonFunction
 import os
 
-c9_ip = os.environ["C9_HOSTNAME"] + '/32'
-
 class CdkOpenSearchStack(cdk.Stack):
     """A stack containing a basic Amazon Opensearch domain running on the
     x86 architecture."""
@@ -30,10 +28,7 @@ class CdkOpenSearchStack(cdk.Stack):
             ec2.Peer.ipv4('10.0.0.0/16'),
             ec2.Port.all_traffic()
         )
-        os_security_group.add_ingress_rule(
-            ec2.Peer.ipv4(c9_ip),
-            ec2.Port.all_traffic()
-        )
+
         os_domain = open_search.Domain(self,
                               "Domain",
                               version=open_search.EngineVersion.OPENSEARCH_1_3,

@@ -6,8 +6,6 @@ import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_rds as rds
 import os
 
-c9_ip = os.environ["C9_HOSTNAME"] + '/32'
-
 class CdkRds5Stack(cdk.Stack):
 
     def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
@@ -36,7 +34,6 @@ class CdkRds5Stack(cdk.Stack):
                                                  parameter_group_name="default.mysql5.7"
                                              )
                                              )
-        db_mysql5.connections.allow_default_port_from(ec2.Peer.ipv4(c9_ip), "Cloud9 MySQL Access")
 
         cdk.CfnOutput( self, "MySQL5RDSInstanceId", value = db_mysql5.instance_identifier)
         cdk.CfnOutput( self, "MySQL5SecretArn", value = db_mysql5.secret.secret_arn)
