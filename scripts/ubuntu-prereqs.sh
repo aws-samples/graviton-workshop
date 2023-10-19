@@ -1,10 +1,9 @@
 sudo systemctl stop apt-daily.timer
 sudo apt-get update
 sudo apt-get install -y jq gettext bash-completion moreutils 
-curl -sSL -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.7/2022-10-31/bin/linux/amd64/kubectl
+curl -sSL -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.26.9/2023-10-12/bin/darwin/amd64/kubectl
 chmod +x /tmp/kubectl
 sudo mv /tmp/kubectl /usr/local/bin/kubectl
-sudo /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl
 pip3 install --upgrade awscli 
 hash -r
 export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
