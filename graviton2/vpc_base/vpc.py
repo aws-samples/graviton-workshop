@@ -12,7 +12,7 @@ class CdkVpcStack(cdk.Stack):
         self.vpc = ec2.Vpc(
             self, "BaseVPC",
             max_azs=2,
-            cidr='10.0.0.0/16',
+            ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
             enable_dns_support=True,
             enable_dns_hostnames=True,
             subnet_configuration=[ec2.SubnetConfiguration(

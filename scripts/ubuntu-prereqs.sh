@@ -1,0 +1,23 @@
+sudo systemctl stop apt-daily.timer
+sudo apt-get update
+sudo apt-get install -y jq gettext bash-completion moreutils 
+curl -sSL -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.26.9/2023-10-12/bin/darwin/amd64/kubectl
+chmod +x /tmp/kubectl
+sudo mv /tmp/kubectl /usr/local/bin/kubectl
+pip3 install --upgrade awscli 
+hash -r
+export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
+export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+echo "export ACCOUNT_ID=${ACCOUNT_ID}" | tee -a ~/.bash_profile
+echo "export AWS_REGION=${AWS_REGION}" | tee -a ~/.bash_profile
+aws configure set default.region ${AWS_REGION}
+aws configure set default.account ${ACCOUNT_ID}
+aws configure get default.region
+aws configure get default.account
+aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing" || aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"
+aws iam get-role --role-name "AWSServiceRoleForAmazonOpenSearchService" || aws iam create-service-linked-role --aws-service-name "opensearchservice.amazonaws.com"
+sudo systemctl start apt-daily.timer
+cd ~/environment/graviton2-workshop && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+npm -g uninstall cdk &&  npm install -g aws-cdk@2.99.1
+cdk bootstrap
+cdk synth

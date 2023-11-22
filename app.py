@@ -11,7 +11,7 @@ from graviton2.cs_graviton.eks_graviton2 import CdkEksStack
 from graviton2.cs_graviton.ecs_graviton2 import CdkEcsStack
 from graviton2.cs_graviton.pipeline_graviton2 import CdkPipelineStack
 from graviton2.cs_graviton.pipeline_netcore_graviton2 import CdkPipelineDotNetStack
-from graviton2.elasticsearch_graviton.es import CdkElasticsearchStack
+from graviton2.opensearch_graviton.open_search import CdkOpenSearchStack
 #from graviton2.emr_graviton.emr_graviton2 import CdkEmrStack
 
 
@@ -30,7 +30,7 @@ class GravitonID(cdk.App):
             self.pipeline_module = CdkPipelineStack(self, self.stack_name + "-pipeline", self.base_module.vpc)
             self.pipeline_dotnet_module = CdkPipelineDotNetStack(self, self.stack_name + "-pipeline-dotnet", self.base_module.vpc)
 #            self.emr_module = CdkEmrStack(self, self.stack_name + "-emr", self.base_module.vpc)
-            self.es_module =  CdkElasticsearchStack(self, self.stack_name + "-es", self.base_module.vpc)
+            self.es_module =  CdkOpenSearchStack(self, self.stack_name + "-os", self.base_module.vpc)
 
 
 if __name__ == '__main__':
