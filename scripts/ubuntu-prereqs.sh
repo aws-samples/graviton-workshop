@@ -17,7 +17,7 @@ aws configure get default.account
 aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing" || aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"
 aws iam get-role --role-name "AWSServiceRoleForAmazonOpenSearchService" || aws iam create-service-linked-role --aws-service-name "opensearchservice.amazonaws.com"
 sudo systemctl start apt-daily.timer
-cd ~/environment/graviton2-workshop && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+cd ~/environment/graviton-workshop && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 npm -g uninstall cdk &&  npm install -g aws-cdk@2.99.1
 cdk bootstrap
 cdk synth
