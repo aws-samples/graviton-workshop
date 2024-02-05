@@ -18,7 +18,10 @@ class CdkPerfStack(cdk.Stack):
         amzn_linux= ec2.MachineImage.latest_amazon_linux2023(cpu_type=ec2.AmazonLinuxCpuType.ARM_64)
         amzn_linux_x86_64= ec2.MachineImage.latest_amazon_linux2023(cpu_type=ec2.AmazonLinuxCpuType.X86_64)
         key_name= "gravitonKey"
-        
+ 
+        # Create a placement group with the CLUSTER strategy
+        #pg = ec2.PlacementGroup(self, "ec2_module_PlacementGroup",strategy=ec2.PlacementGroupStrategy.CLUSTER)
+        pg = ec2.CfnPlacementGroup(self, 'ec2_module_PlacementGroup', strategy='cluster')
         ec2_security_group = ec2.SecurityGroup(
             self, "Ec2SecurityGroup",
             vpc=vpc,
@@ -46,6 +49,7 @@ class CdkPerfStack(cdk.Stack):
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
                             user_data=ec2.UserData.custom(user_data)
                             )
+        client.instance.add_property_override('PlacementGroupName', pg.ref)
 
         user_data = self.get_user_data("sut_1")
         sut_1 = ec2.Instance(self, "SUT1",
