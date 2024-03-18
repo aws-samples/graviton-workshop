@@ -3,8 +3,8 @@
 import aws_cdk as cdk
 from constructs import Construct
 import aws_cdk.aws_dynamodb as dynamodb
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ec2 as ec2
-import aws_cdk.aws_rds as rds
 import os
 
 default_vpc_cidr = os.environ["DefaultRouteCidr"] 
@@ -39,6 +39,22 @@ class CdkEC2Stack(cdk.Stack):
         ec2_security_group.add_ingress_rule(
             ec2.Peer.ipv4(default_vpc_cidr),
             ec2.Port.all_traffic()
+        )
+        
+        # Define the IAM policy for the SUT machines so the test application (shortenURL) on them to have right access
+        policy_statement = iam.PolicyStatement(
+            actions=["cloudformation:*","dynamodb:*"],
+            resources=["*"],
+            effect=iam.Effect.ALLOW
+        )
+        policy_document = iam.PolicyDocument(statements=[policy_statement])
+
+
+        # Create the IAM role
+        role = iam.Role(
+            self, 'ec2_module_IAM_Role_SUT_machines',
+            assumed_by=iam.ServicePrincipal('ec2.amazonaws.com'),
+            inline_policies={'ec2_module_SUT_machines_Policy': policy_document}
         )
         
         # create a dynamodb table for the test application to use
@@ -109,7 +125,8 @@ class CdkEC2Stack(cdk.Stack):
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-                            user_data=ec2.UserData.custom(user_data)
+                            user_data=ec2.UserData.custom(user_data),
+                            role=role  # Attach the IAM role to the SUT instance
                             )
                             
         # add to placement group with the CLUSTER strategy                            
@@ -126,7 +143,8 @@ class CdkEC2Stack(cdk.Stack):
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-                            user_data=ec2.UserData.custom(user_data)
+                            user_data=ec2.UserData.custom(user_data),
+                            role=role  # Attach the IAM role to the SUT instance
                             )
         
         # add to placement group with the CLUSTER strategy                            
@@ -143,7 +161,8 @@ class CdkEC2Stack(cdk.Stack):
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-                            user_data=ec2.UserData.custom(user_data)
+                            user_data=ec2.UserData.custom(user_data),
+                            role=role  # Attach the IAM role to the SUT instance
                             )
 
         # add to placement group with the CLUSTER strategy                            
