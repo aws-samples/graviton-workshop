@@ -49,7 +49,6 @@ class CdkEC2Stack(cdk.Stack):
         )
         policy_document = iam.PolicyDocument(statements=[policy_statement])
 
-
         # Create the IAM role
         role = iam.Role(
             self, 'ec2_module_IAM_Role_SUT_machines',
