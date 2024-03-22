@@ -168,8 +168,8 @@ class CdkEC2Stack(cdk.Stack):
         #sut_3.instance.add_property_override('PlacementGroupName', pg.ref)
 
         cdk.CfnOutput( self, "Client1_IP", value = client1.instance_private_ip)
-        cdk.CfnOutput( self, "Client2_IP", value = client2.instance_private_ip) 
-        cdk.CfnOutput( self, "Client3_IP", value = client3.instance_private_ip) 
+        #cdk.CfnOutput( self, "Client2_IP", value = client2.instance_private_ip) 
+        #cdk.CfnOutput( self, "Client3_IP", value = client3.instance_private_ip) 
         cdk.CfnOutput( self, "SUT1_IP", value = sut_1.instance_private_ip) 
         cdk.CfnOutput( self, "SUT2_IP", value = sut_2.instance_private_ip)
         cdk.CfnOutput( self, "SUT3_IP", value = sut_3.instance_private_ip)
