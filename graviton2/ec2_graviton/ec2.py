@@ -19,9 +19,9 @@ class CdkEC2Stack(cdk.Stack):
         ec2_gv3_type = "c7g.xlarge"
         ec2_x86_type = "c5.xlarge"
         
-        # Create a placement group with the CLUSTER strategy, we want all instances to be in same placemenet group for performance reasons
+        # Create a placement group with the CLUSTER strategy, we want all instances to be in same placement group for performance reasons
         #
-        pg = ec2.CfnPlacementGroup(self, 'ec2_module_PlacementGroup', strategy='cluster')
+        #pg = ec2.CfnPlacementGroup(self, 'ec2_module_PlacementGroup', strategy='cluster')
         
         amzn_linux_arm= ec2.MachineImage.latest_amazon_linux2023(cpu_type=ec2.AmazonLinuxCpuType.ARM_64)
         amzn_linux_x86_64= ec2.MachineImage.latest_amazon_linux2023(cpu_type=ec2.AmazonLinuxCpuType.X86_64)
@@ -80,7 +80,7 @@ class CdkEC2Stack(cdk.Stack):
                             user_data=ec2.UserData.custom(user_data)
                             )
         # add to placement group with the CLUSTER strategy                            
-        client1.instance.add_property_override('PlacementGroupName', pg.ref)
+        #client1.instance.add_property_override('PlacementGroupName', pg.ref)
         
         client2 = ec2.Instance(self, "Client-2",
                             instance_type=ec2.InstanceType(
@@ -95,7 +95,7 @@ class CdkEC2Stack(cdk.Stack):
                             user_data=ec2.UserData.custom(user_data)
                             )
         # add to placement group with the CLUSTER strategy                            
-        client2.instance.add_property_override('PlacementGroupName', pg.ref)
+        #client2.instance.add_property_override('PlacementGroupName', pg.ref)
         
         client3 = ec2.Instance(self, "Client-3",
                             instance_type=ec2.InstanceType(
@@ -111,7 +111,7 @@ class CdkEC2Stack(cdk.Stack):
                             )
                             
         # add to placement group with the CLUSTER strategy                            
-        client3.instance.add_property_override('PlacementGroupName', pg.ref)
+        #client3.instance.add_property_override('PlacementGroupName', pg.ref)
         
         user_data = self.get_user_data("ec2_module_sut_1")
         sut_1 = ec2.Instance(self, "SUT1",
@@ -129,7 +129,7 @@ class CdkEC2Stack(cdk.Stack):
                             )
                             
         # add to placement group with the CLUSTER strategy                            
-        sut_1.instance.add_property_override('PlacementGroupName', pg.ref)
+        #sut_1.instance.add_property_override('PlacementGroupName', pg.ref)
  
         user_data = self.get_user_data("ec2_module_sut_2")
         sut_2 = ec2.Instance(self, "SUT2",
@@ -147,7 +147,7 @@ class CdkEC2Stack(cdk.Stack):
                             )
         
         # add to placement group with the CLUSTER strategy                            
-        sut_2.instance.add_property_override('PlacementGroupName', pg.ref)                    
+        #sut_2.instance.add_property_override('PlacementGroupName', pg.ref)                    
                             
         user_data = self.get_user_data("ec2_module_sut_3")
         sut_3 = ec2.Instance(self, "SUT3",
@@ -165,7 +165,7 @@ class CdkEC2Stack(cdk.Stack):
                             )
 
         # add to placement group with the CLUSTER strategy                            
-        sut_3.instance.add_property_override('PlacementGroupName', pg.ref)
+        #sut_3.instance.add_property_override('PlacementGroupName', pg.ref)
 
         cdk.CfnOutput( self, "Client1_IP", value = client1.instance_private_ip)
         cdk.CfnOutput( self, "Client2_IP", value = client2.instance_private_ip) 
