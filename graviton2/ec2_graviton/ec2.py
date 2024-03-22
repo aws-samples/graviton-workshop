@@ -14,7 +14,7 @@ class CdkEC2Stack(cdk.Stack):
     def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        ec2_test_client = "c5.large"
+        ec2_test_client = "c5.4xlarge"
         ec2_gv2_type = "c6g.xlarge"
         ec2_gv3_type = "c7g.xlarge"
         ec2_x86_type = "c5.xlarge"
@@ -82,33 +82,33 @@ class CdkEC2Stack(cdk.Stack):
         # add to placement group with the CLUSTER strategy                            
         #client1.instance.add_property_override('PlacementGroupName', pg.ref)
         
-        client2 = ec2.Instance(self, "Client-2",
-                            instance_type=ec2.InstanceType(
-                                instance_type_identifier=ec2_test_client),
-                            instance_name="EC2_Module_Test_Client2_for_SUT2",
-                            machine_image=amzn_linux_x86_64,
-                            vpc=vpc,
-                            key_name=key_name,
-                            security_group=ec2_security_group,
-                            vpc_subnets=ec2.SubnetSelection(
-                                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-                            user_data=ec2.UserData.custom(user_data)
-                            )
-        # add to placement group with the CLUSTER strategy                            
+        # client2 = ec2.Instance(self, "Client-2",
+        #                     instance_type=ec2.InstanceType(
+        #                         instance_type_identifier=ec2_test_client),
+        #                     instance_name="EC2_Module_Test_Client2_for_SUT2",
+        #                     machine_image=amzn_linux_x86_64,
+        #                     vpc=vpc,
+        #                     key_name=key_name,
+        #                     security_group=ec2_security_group,
+        #                     vpc_subnets=ec2.SubnetSelection(
+        #                         subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+        #                     user_data=ec2.UserData.custom(user_data)
+        #                     )
+        # # add to placement group with the CLUSTER strategy                            
         #client2.instance.add_property_override('PlacementGroupName', pg.ref)
         
-        client3 = ec2.Instance(self, "Client-3",
-                            instance_type=ec2.InstanceType(
-                                instance_type_identifier=ec2_test_client),
-                            instance_name="EC2_Module_Test_Client3_for_SUT3",
-                            machine_image=amzn_linux_x86_64,
-                            vpc=vpc,
-                            key_name=key_name,
-                            security_group=ec2_security_group,
-                            vpc_subnets=ec2.SubnetSelection(
-                                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-                            user_data=ec2.UserData.custom(user_data)
-                            )
+        # client3 = ec2.Instance(self, "Client-3",
+        #                     instance_type=ec2.InstanceType(
+        #                         instance_type_identifier=ec2_test_client),
+        #                     instance_name="EC2_Module_Test_Client3_for_SUT3",
+        #                     machine_image=amzn_linux_x86_64,
+        #                     vpc=vpc,
+        #                     key_name=key_name,
+        #                     security_group=ec2_security_group,
+        #                     vpc_subnets=ec2.SubnetSelection(
+        #                         subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+        #                     user_data=ec2.UserData.custom(user_data)
+        #                     )
                             
         # add to placement group with the CLUSTER strategy                            
         #client3.instance.add_property_override('PlacementGroupName', pg.ref)
