@@ -45,3 +45,4 @@ class CdkAuroraStack(Stack):
             storage_encrypted=True,
             default_database_name="postgres",
         )
+        cdk.CfnOutput(self, "AURORA_WRITER_ENDPOINT", value=cluster.cluster_endpoint)
