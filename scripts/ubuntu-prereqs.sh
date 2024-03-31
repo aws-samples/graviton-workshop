@@ -1,7 +1,7 @@
 sudo systemctl stop apt-daily.timer
 sudo apt-get update
-sudo apt-get install -y jq gettext bash-completion moreutils 
-curl -sSL -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.26.9/2023-10-12/bin/darwin/amd64/kubectl
+sudo apt-get install -y jq gettext bash-completion moreutils postgresql-client-14 postgresql-client-common
+curl -sSL -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
 chmod +x /tmp/kubectl
 sudo mv /tmp/kubectl /usr/local/bin/kubectl
 pip3 install --upgrade awscli 
@@ -18,6 +18,6 @@ aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing" || aws iam 
 aws iam get-role --role-name "AWSServiceRoleForAmazonOpenSearchService" || aws iam create-service-linked-role --aws-service-name "opensearchservice.amazonaws.com"
 sudo systemctl start apt-daily.timer
 cd ~/environment/graviton2-workshop && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-npm -g uninstall cdk &&  npm install -g aws-cdk@2.99.1
+npm -g uninstall cdk &&  npm install -g aws-cdk@2.133.0
 cdk bootstrap
 cdk synth
