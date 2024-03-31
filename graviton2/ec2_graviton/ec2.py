@@ -42,20 +42,35 @@ class CdkEC2Stack(cdk.Stack):
         )
         
         # Define the IAM policy for the SUT machines so the test application (shortenURL) on them to have right access
-        policy_statement = iam.PolicyStatement(
+        sut_policy_statement = iam.PolicyStatement(
             actions=["cloudformation:*","dynamodb:*"],
             resources=["*"],
             effect=iam.Effect.ALLOW
         )
-        policy_document = iam.PolicyDocument(statements=[policy_statement])
+        sut_policy_document = iam.PolicyDocument(statements=[sut_policy_statement])
 
-        # Create the IAM role
-        role = iam.Role(
+        # Create the IAM role for SUT machines
+        sut_role = iam.Role(
             self, 'ec2_module_IAM_Role_SUT_machines',
             assumed_by=iam.ServicePrincipal('ec2.amazonaws.com'),
-            inline_policies={'ec2_module_SUT_machines_Policy': policy_document}
+            inline_policies={'ec2_module_SUT_machines_Policy': sut_policy_document}
         )
         
+        # Define the IAM policy for the Client machines so they can access the cloudformation to get the SUTs IPs
+        client_policy_statement = iam.PolicyStatement(
+            actions=["cloudformation:*"],
+            resources=["*"],
+            effect=iam.Effect.ALLOW
+        )
+        client_policy_document = iam.PolicyDocument(statements=[client_policy_statement])
+
+        # Create the IAM role for client machine
+        client_role = iam.Role(
+            self, 'ec2_module_IAM_Role_Client_machines',
+            assumed_by=iam.ServicePrincipal('ec2.amazonaws.com'),
+            inline_policies={'ec2_module_Client_machines_Policy': client_policy_document}
+        )
+
         # create a dynamodb table for the test application to use
         urls_table = dynamodb.Table(
             self, "GravitonWorkshopDdbUrlsTable",
@@ -77,7 +92,8 @@ class CdkEC2Stack(cdk.Stack):
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-                            user_data=ec2.UserData.custom(user_data)
+                            user_data=ec2.UserData.custom(user_data),
+                            role=client_role # Attach the IAM role to the client instance
                             )
         # add to placement group with the CLUSTER strategy                            
         #client1.instance.add_property_override('PlacementGroupName', pg.ref)
@@ -92,7 +108,8 @@ class CdkEC2Stack(cdk.Stack):
         #                     security_group=ec2_security_group,
         #                     vpc_subnets=ec2.SubnetSelection(
         #                         subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-        #                     user_data=ec2.UserData.custom(user_data)
+        #                     user_data=ec2.UserData.custom(user_data),
+        #                     role=client_role # Attach the IAM role to the client instance
         #                     )
         # # add to placement group with the CLUSTER strategy                            
         #client2.instance.add_property_override('PlacementGroupName', pg.ref)
@@ -107,7 +124,8 @@ class CdkEC2Stack(cdk.Stack):
         #                     security_group=ec2_security_group,
         #                     vpc_subnets=ec2.SubnetSelection(
         #                         subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
-        #                     user_data=ec2.UserData.custom(user_data)
+        #                     user_data=ec2.UserData.custom(user_data),
+        #                     role=client_role # Attach the IAM role to the client instance
         #                     )
                             
         # add to placement group with the CLUSTER strategy                            
@@ -125,7 +143,7 @@ class CdkEC2Stack(cdk.Stack):
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
                             user_data=ec2.UserData.custom(user_data),
-                            role=role  # Attach the IAM role to the SUT instance
+                            role=sut_role  # Attach the IAM role to the SUT instance
                             )
                             
         # add to placement group with the CLUSTER strategy                            
@@ -143,7 +161,7 @@ class CdkEC2Stack(cdk.Stack):
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
                             user_data=ec2.UserData.custom(user_data),
-                            role=role  # Attach the IAM role to the SUT instance
+                            role=sut_role  # Attach the IAM role to the SUT instance
                             )
         
         # add to placement group with the CLUSTER strategy                            
@@ -161,7 +179,7 @@ class CdkEC2Stack(cdk.Stack):
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
                             user_data=ec2.UserData.custom(user_data),
-                            role=role  # Attach the IAM role to the SUT instance
+                            role=sut_role  # Attach the IAM role to the SUT instance
                             )
 
         # add to placement group with the CLUSTER strategy                            
