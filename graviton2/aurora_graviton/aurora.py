@@ -1,3 +1,4 @@
+import aws_cdk as cdk
 from constructs import Construct
 from aws_cdk import Stack, aws_rds as rds, aws_ec2 as ec2, aws_iam as iam, Duration
 import os
@@ -43,6 +44,7 @@ class CdkAuroraStack(Stack):
             security_groups=[security_group],
             vpc=vpc,
             storage_encrypted=True,
-            default_database_name="postgres",
+            default_database_name="postgres"
         )
-        cdk.CfnOutput(self, "AURORA_WRITER_ENDPOINT", value=cluster.cluster_endpoint)
+        
+        cdk.CfnOutput(self, "AURORA_WRITER_ENDPOINT",value=cluster.cluster_endpoint.hostname,description="The endpoint of the Aurora cluster")
