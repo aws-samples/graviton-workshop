@@ -16,7 +16,7 @@ def short_url_post():
     return create_short_url(url)
 
 #get full url from short url
-@app.route('/get_full_url', methods=['GET'])
+@app.route('/getFullURL', methods=['GET'])
 def redirect_short_url():
     short_url = request.args.get('short_url', default=None, type=str)
     full_url = retrive_from_dynamo(short_url)
