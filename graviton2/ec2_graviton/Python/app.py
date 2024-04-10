@@ -9,7 +9,7 @@ def index():
     return 'Hi everyone'
 
 # post parameter from url
-@app.route('/short_url', methods=['POST'])
+@app.route('/shortenURL', methods=['POST'])
 def short_url_post():
     data = request.get_json()
     url = data.get('url')
