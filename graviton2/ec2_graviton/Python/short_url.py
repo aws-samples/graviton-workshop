@@ -52,7 +52,7 @@ def create_short_url(url):
         short_url = ''.join(random.choice(letters) for i in range(10))
         save_in_dynamo(short_url, url)
         # append the random string generated to the url
-        return jsonify({'short_url':short_url}) 
+        return jsonify({'shortURL':short_url, 'originalURL':url}) 
     except Exception as e:
         return str(e)
     
