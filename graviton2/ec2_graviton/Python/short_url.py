@@ -4,7 +4,10 @@ import string
 import boto3
 import boto3
 import os
-current_region = 'us-east-2'
+session = boto3.session.Session()
+current_region = session.region_name
+
+#current_region = 'us-east-2'
 
 
 def get_table_name():
