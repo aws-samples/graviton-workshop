@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import short_url
 from short_url import create_short_url, retrive_from_dynamo
+import boto3
 
 app = Flask(__name__)
 
@@ -17,6 +18,8 @@ def index():
 
 @app.route('/shortenURL', methods=['POST'])
 def short_url_post():
+    session = boto3.session.Session()
+    return session.region_name
     data = request.get_json()
     original_url = data.get('OriginalURL')  # Use the correct key from your JSON payload
     if not original_url:
