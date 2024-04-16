@@ -58,8 +58,10 @@ def create_short_url(url):
     
 
 def save_in_dynamo(short_url, original_url):
-    region_name = os.getenv('AWS_REGION', 'us-east-1')
-    dynamodb = boto3.resource('dynamodb', region_name=region_name)
+    session = boto3.session.Session()
+    region_name = session.region_name
+
+    dynamodb = boto3.resource('dynamodb', region_name)
 
     try: 
         table_name = get_table_name()
