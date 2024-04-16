@@ -18,8 +18,6 @@ def index():
 
 @app.route('/shortenURL', methods=['POST'])
 def short_url_post():
-    session = boto3.session.Session()
-    return session.region_name
     data = request.get_json()
     original_url = data.get('OriginalURL')  # Use the correct key from your JSON payload
     if not original_url:
