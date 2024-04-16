@@ -61,7 +61,7 @@ def save_in_dynamo(short_url, original_url):
     session = boto3.session.Session()
     region_name = session.region_name
 
-    dynamodb = boto3.resource('dynamodb', region_name)
+    dynamodb = boto3.resource('dynamodb', 'us-east-2')
 
     try: 
         table_name = get_table_name()
