@@ -26,13 +26,21 @@ def short_url_post():
     return  short_url  # Make sure to return a JSON object with the shortURL key
 
 
-#get full url from short url
-@app.route('/getFullURL', methods=['GET'])
-def redirect_short_url():
-    short_url = request.args.get('short_url', default=None, type=str)
-    full_url = retrive_from_dynamo(short_url)
-    return full_url['url']
+# #get full url from short url
+# @app.route('/getFullURL', methods=['GET'])
+# def redirect_short_url():
+#     short_url = request.args.get('short_url', default=None, type=str)
+#     full_url = retrive_from_dynamo(short_url)
+#     return full_url['url']
 
+@app.route('/getFullURL/<short_url>', methods=['GET'])
+def redirect_short_url(short_url):
+    full_url = retrive_from_dynamo(short_url)
+    if full_url:
+        return full_url['url']
+    else:
+        return 'URL not found', 404
+    
 if __name__ == '__main__':
    app.run(host="0.0.0.0", port=5000, debug=True)
 
