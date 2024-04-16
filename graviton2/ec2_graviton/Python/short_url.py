@@ -3,7 +3,7 @@ import random
 import string
 import boto3
 import boto3
-
+import os
 current_region = 'us-east-1'
 
 
@@ -58,7 +58,8 @@ def create_short_url(url):
     
 
 def save_in_dynamo(short_url, original_url):
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+    region_name = os.getenv('AWS_REGION', 'us-east-1')
+    dynamodb = boto3.resource('dynamodb', region_name=region_name)
 
     try: 
         table_name = get_table_name()
