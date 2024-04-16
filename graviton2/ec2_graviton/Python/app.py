@@ -22,7 +22,7 @@ def short_url_post():
     if not original_url:
         return jsonify({'error': 'Missing URL'}), 400
     short_url = create_short_url(original_url)
-    return jsonify({'shortURL': short_url})  # Make sure to return a JSON object with the shortURL key
+    return  short_url  # Make sure to return a JSON object with the shortURL key
 
 
 #get full url from short url
