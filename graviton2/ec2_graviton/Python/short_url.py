@@ -4,7 +4,7 @@ import string
 import boto3
 import boto3
 import os
-current_region = 'us-east-1'
+current_region = 'us-east-2'
 
 
 def get_table_name():
@@ -27,7 +27,7 @@ def get_table_name():
 
 
 def retrive_from_dynamo(short_url):
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+    dynamodb = boto3.resource('dynamodb', current_region)
     table_name = get_table_name()
     table = dynamodb.Table(table_name)
 
@@ -61,7 +61,7 @@ def save_in_dynamo(short_url, original_url):
     session = boto3.session.Session()
     region_name = session.region_name
 
-    dynamodb = boto3.resource('dynamodb', 'us-east-2')
+    dynamodb = boto3.resource('dynamodb', current_region)
 
     try: 
         table_name = get_table_name()
