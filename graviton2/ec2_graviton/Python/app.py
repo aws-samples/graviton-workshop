@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import short_url
 from short_url import create_short_url, retrive_from_dynamo
 
@@ -8,12 +8,22 @@ app = Flask(__name__)
 def index():
     return 'Hi everyone'
 
-# post parameter from url
+# # post parameter from url
+# @app.route('/shortenURL', methods=['POST'])
+# def short_url_post():
+#     data = request.get_json()
+#     url = data.get('url')
+#     return create_short_url(url)
+
 @app.route('/shortenURL', methods=['POST'])
 def short_url_post():
     data = request.get_json()
-    url = data.get('url')
-    return create_short_url(url)
+    original_url = data.get('OriginalURL')  # Use the correct key from your JSON payload
+    if not original_url:
+        return jsonify({'error': 'Missing URL'}), 400
+    short_url = create_short_url(original_url)
+    return jsonify({'shortURL': short_url})  # Make sure to return a JSON object with the shortURL key
+
 
 #get full url from short url
 @app.route('/getFullURL', methods=['GET'])
