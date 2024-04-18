@@ -44,7 +44,18 @@ class CdkAuroraStack(Stack):
             security_groups=[security_group],
             vpc=vpc,
             storage_encrypted=True,
-            default_database_name="postgres"
+            default_database_name="postgres",
         )
-        
-        cdk.CfnOutput(self, "AURORA_WRITER_ENDPOINT",value=cluster.cluster_endpoint.hostname,description="The endpoint of the Aurora cluster")
+
+        cdk.CfnOutput(
+            self,
+            "AURORA_WRITER_ENDPOINT",
+            value=cluster.cluster_endpoint.hostname,
+            description="The endpoint of the Aurora cluster",
+        )
+        cdk.CfnOutput(
+            self,
+            "AURORA_SECRET_NAME",
+            value=cluster.secret.secret_name,
+            description="Aurora PostgreSQL database secret name",
+        )

@@ -3,8 +3,8 @@ import random
 import string
 import boto3
 import boto3
-
-current_region = 'us-east-1'
+import os
+current_region = 'us-east-2'
 
 
 def get_table_name():
@@ -27,7 +27,7 @@ def get_table_name():
 
 
 def retrive_from_dynamo(short_url):
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+    dynamodb = boto3.resource('dynamodb', current_region)
     table_name = get_table_name()
     table = dynamodb.Table(table_name)
 
@@ -52,13 +52,16 @@ def create_short_url(url):
         short_url = ''.join(random.choice(letters) for i in range(10))
         save_in_dynamo(short_url, url)
         # append the random string generated to the url
-        return jsonify({'short_url':short_url}) 
+        return jsonify({'shortURL':short_url, 'originalURL':url}) 
     except Exception as e:
         return str(e)
     
 
 def save_in_dynamo(short_url, original_url):
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+    session = boto3.session.Session()
+    region_name = session.region_name
+
+    dynamodb = boto3.resource('dynamodb', current_region)
 
     try: 
         table_name = get_table_name()
