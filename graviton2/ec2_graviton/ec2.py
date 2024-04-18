@@ -14,6 +14,7 @@ class CdkEC2Stack(cdk.Stack):
     def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        current_region = self.region
         ec2_test_client = "c5.4xlarge"
         ec2_gv2_type = "c6g.xlarge"
         ec2_gv3_type = "c7g.xlarge"
@@ -192,6 +193,8 @@ class CdkEC2Stack(cdk.Stack):
         cdk.CfnOutput( self, "SUT2_IP", value = sut_2.instance_private_ip)
         cdk.CfnOutput( self, "SUT3_IP", value = sut_3.instance_private_ip)
         cdk.CfnOutput( self, "EC2-Module-DynamoDB-Table", value =urls_table.table_name)
+        # Output the current region
+        cdk.CfnOutput(self, "CurrentRegionOutput", value=current_region)
 
     def get_user_data(self, filename):
         with open('./scripts/' + filename) as f:
