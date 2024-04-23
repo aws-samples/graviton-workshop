@@ -5,7 +5,7 @@ import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_eks as eks
 import aws_cdk.aws_iam as iam
 import os
-from aws_cdk.lambda_layer_kubectl_v26 import KubectlV26Layer 
+from aws_cdk.lambda_layer_kubectl_v29 import KubectlV29Layer
 
 class CdkEksStack(cdk.Stack):
 
@@ -54,7 +54,7 @@ class CdkEksStack(cdk.Stack):
         )
 
         self.cluster = eks.Cluster(self, "EKSGraviton2",
-            version=eks.KubernetesVersion.V1_26,
+            version=eks.KubernetesVersion.V1_29,
             default_capacity=0,
             output_cluster_name=True,
             masters_role=clusterAdminRole,
@@ -62,7 +62,7 @@ class CdkEksStack(cdk.Stack):
             endpoint_access=eks.EndpointAccess.PUBLIC_AND_PRIVATE,
             vpc=vpc,
             security_group=eks_security_group,
-            kubectl_layer=KubectlV26Layer(self, 'KubectlV26Layer')
+            kubectl_layer=KubectlV29Layer(self, 'KubectlV29Layer')
 
         )
 
