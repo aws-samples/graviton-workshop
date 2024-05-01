@@ -2,10 +2,17 @@ from flask import jsonify
 import random
 import string
 import boto3
-import boto3
 import os
-current_region = 'us-east-2'
+# current_region = 'us-east-2'
 
+# get current region
+def get_current_region():
+    client = boto3.client('s3') 
+    current_region = client.meta.region_name
+    print('current_region:', current_region)
+    return current_region
+
+current_region = get_current_region()
 
 def get_table_name():
     # Create a CloudFormation client
