@@ -2,9 +2,36 @@ from flask import jsonify
 import random
 import string
 import boto3
-import boto3
 import os
-current_region = 'us-east-2'
+import requests
+# current_region = 'us-east-2'
+
+
+def get_aws_region():
+    try:
+        # Fetch the token
+        token_response = requests.put(
+            'http://169.254.169.254/latest/api/token',
+            headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'}
+        )
+        token_response.raise_for_status()
+        token = token_response.text
+
+        # Use the token to fetch the region
+        response = requests.get(
+            'http://169.254.169.254/latest/dynamic/instance-identity/document',
+            headers={'X-aws-ec2-metadata-token': token}
+        )
+        response.raise_for_status()
+        return response.json()['region']
+    except requests.RequestException as e:
+        print(f"Error fetching AWS region: {e}")
+        return None
+
+current_region = get_aws_region()
+print(f"AWS_REGION={current_region}")
+
+
 
 
 def get_table_name():
