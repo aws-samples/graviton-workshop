@@ -1,36 +1,41 @@
 
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { PutCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { CloudFormationClient, DescribeStacksCommand } from '@aws-sdk/client-cloudformation';
+
+
+import randomstring from 'randomstring';
+import express from 'express';
+import bodyParser from 'body-parser';
+import axios from 'axios';
+
+
 try {
 
-    const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-    const { GetCommand, PutCommand, DynamoDBDocumentClient } = require("@aws-sdk/lib-dynamodb");
-    const randomstring = require('randomstring');
-    const express = require('express');
-    const bodyParser = require('body-parser');
+    const awsRegion = await getAwsRegion();
 
-    const AWS = require('aws-sdk');
-    AWS.config.update({ region: 'us-west-2' });
-
-
-    //TODO: Delete Unnesessary packages
-
-    const cloudformation = new AWS.CloudFormation();
-    const client = new DynamoDBClient({ region: "us-west-2" });
-
+    //AWS
+    const client = new DynamoDBClient({
+        region: awsRegion // Replace with your desired AWS region
+    });
     const docClient = DynamoDBDocumentClient.from(client);
-    const gravitonEc2Stack = 'GravitonID-ec2';
-    const dynamoDBTableKey= 'EC2ModuleDynamoDBTable'
+    const cloudformation = new CloudFormationClient({ region: awsRegion });
 
     //App
     const app = express();
     app.use(bodyParser.json());
     const PORT = 8080;
 
+    const gravitonEc2Stack = 'GravitonID-ec2';
+    const dynamoDBTableKey = 'EC2ModuleDynamoDBTable'
     const cloudformationOutputs = {
         outputs: {}
     };
 
 
+
     fetchStackParameters(gravitonEc2Stack);
+    
 
     // Middleware for input validation
     const validateInput = (req, res, next) => {
@@ -54,10 +59,10 @@ try {
     // Function to fetch parameters and store them globally
     async function fetchStackParameters(stackName) {
         try {
-            const data = await cloudformation.describeStacks({ StackName: stackName }).promise();
+
+            const data = await cloudformation.send(new DescribeStacksCommand({ StackName: stackName }));
             const stack = data.Stacks[0];
 
-                // Fetch and store outputs
             const outputs = stack.Outputs;
             outputs.forEach(output => {
                 cloudformationOutputs.outputs[output.OutputKey] = output.OutputValue;
@@ -70,6 +75,45 @@ try {
     }
 
 
+    async function getAwsRegion() {
+        try {
+
+            // Fetch the token
+            const tokenResponse = await axios.put(
+                'http://169.254.169.254/latest/api/token',
+                {},
+                {
+                    headers: {
+                        'X-aws-ec2-metadata-token-ttl-seconds': '21600'
+                    }
+                }
+            );
+            const token = tokenResponse.data;
+
+            console.log('Token:', token);
+    
+            // Use the token to fetch the region
+            const response = await axios.get(
+                'http://169.254.169.254/latest/dynamic/instance-identity/document',
+                {
+                    headers: {
+                        'X-aws-ec2-metadata-token': token
+                    }
+                }
+            );
+            
+            const region = response.data.region;
+            console.log('Region:', region);
+            return region;
+
+        } catch (error) {
+            console.error(`Error fetching AWS region: ${error}`);
+            return null;
+        }
+    }
+    
+
+
     // POST endpoint
     app.post('/shortenURL', validateInput, async (req, res) => {
 
@@ -80,7 +124,7 @@ try {
                 length: 10,
                 charset: 'alphabetic'
             });
-          
+
             const dynamoDBTableName = cloudformationOutputs.outputs[dynamoDBTableKey];
 
             const command = new PutCommand({
@@ -93,7 +137,6 @@ try {
 
             const response = await docClient.send(command);
 
-            // Check if the HTTP status code indicates success
             if (response.$metadata.httpStatusCode !== 200) {
                 console.log('Error in DynamoDB request:', response);
                 return res.status(response.$metadata.httpStatusCode).json(response);
@@ -107,6 +150,7 @@ try {
 
             return res.status(200).json(output);
 
+            
         } catch (error) {
             console.error('Error in main:', error);
             return res.status(500).json({ error: 'Internal Server Error' });
@@ -136,7 +180,6 @@ try {
 
             const response = await docClient.send(command);
 
-            // Check if the response has the expected structure
             if (!response || !response.Item || !response.Item.originalUrl) {
                 return res.status(404).json({ error: 'Short URL not found.' });
             }
@@ -147,24 +190,23 @@ try {
 
         } catch (error) {
             console.error('Error in main:', error);
-            throw error; // Propagate the error to the caller
+            throw error; 
         }
 
     });
 
+    app.listen(PORT, () => {
+         console.log(`Server running on http://localhost:${PORT}`);
+     });
 
 
-   /*app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
+    /*app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running on http://0.0.0.0:${PORT}`);
     });*/
 
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server running on http://0.0.0.0:${PORT}`);
-    });
-    
 
 
 } catch (error) {
     console.error('Error in main:', error);
-    throw error; // Propagate the error to the caller
+    throw error; 
 }
