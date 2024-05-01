@@ -1,6 +1,6 @@
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { PutCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, GetCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { CloudFormationClient, DescribeStacksCommand } from '@aws-sdk/client-cloudformation';
 
 
@@ -158,7 +158,6 @@ try {
 
     // GET endpoint
     app.get('/getFullURL/:shortUrl', validateGetFullURLInput, async (req, res) => {
-
 
         try {
 
