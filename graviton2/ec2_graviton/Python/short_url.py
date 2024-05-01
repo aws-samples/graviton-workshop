@@ -3,16 +3,23 @@ import random
 import string
 import boto3
 import os
+import requests
 # current_region = 'us-east-2'
 
-# get current region
-def get_current_region():
-    client = boto3.client('s3') 
-    current_region = client.meta.region_name
-    print('current_region:', current_region)
-    return current_region
 
-current_region = get_current_region()
+def get_aws_region():
+    try:
+        response = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document')
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        return response.json()['region']
+    except requests.RequestException as e:
+        print(f"Error fetching AWS region: {e}")
+        return None
+
+current_region = get_aws_region()
+print(f"AWS_REGION={current_region}")
+
+
 
 def get_table_name():
     # Create a CloudFormation client
