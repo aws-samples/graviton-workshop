@@ -68,7 +68,6 @@ try {
                 cloudformationOutputs.outputs[output.OutputKey] = output.OutputValue;
             });
 
-            console.log('Global Parameters:', cloudformationOutputs);
         } catch (err) {
             console.error('Error fetching stack details:', err);
         }
@@ -90,8 +89,6 @@ try {
             );
             const token = tokenResponse.data;
 
-            console.log('Token:', token);
-    
             // Use the token to fetch the region
             const response = await axios.get(
                 'http://169.254.169.254/latest/dynamic/instance-identity/document',
@@ -102,9 +99,7 @@ try {
                 }
             );
             
-            const region = response.data.region;
-            console.log('Region:', region);
-            return region;
+            return response.data.region;
 
         } catch (error) {
             console.error(`Error fetching AWS region: ${error}`);
@@ -195,15 +190,10 @@ try {
 
     });
 
-    app.listen(PORT, () => {
-         console.log(`Server running on http://localhost:${PORT}`);
-     });
 
-
-    /*app.listen(PORT, '0.0.0.0', () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`Server running on http://0.0.0.0:${PORT}`);
-    });*/
-
+    });
 
 
 } catch (error) {
