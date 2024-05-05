@@ -2,9 +2,7 @@ from flask import jsonify
 import random
 import string
 import boto3
-import os
 import requests
-# current_region = 'us-east-2'
 
 
 def get_aws_region():
@@ -85,9 +83,7 @@ def create_short_url(url):
     
 
 def save_in_dynamo(short_url, original_url):
-    session = boto3.session.Session()
-    region_name = session.region_name
-
+    
     dynamodb = boto3.resource('dynamodb', current_region)
 
     try: 
