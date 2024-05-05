@@ -116,7 +116,7 @@ app.post('/shortenURL', validateInput, async (req, res) => {
         });
 
         const dynamoDBTableName = cloudformationOutputs.outputs[dynamoDBTableKey];
-        console.log(dynamoDBTableName);
+
         const command = new PutCommand({
             TableName: dynamoDBTableName,
             Item: {
@@ -126,7 +126,7 @@ app.post('/shortenURL', validateInput, async (req, res) => {
         });
 
         const response = await docClient.send(command);
-        console.log('response: ', response);
+
         if (response.$metadata.httpStatusCode !== 200) {
             console.log('Error in DynamoDB request:', response);
             return res.status(response.$metadata.httpStatusCode).json(response);
