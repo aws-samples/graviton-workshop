@@ -93,8 +93,7 @@ async function getAwsRegion() {
                 }
             }
         );
-        console.log('hi');
-        console.log(response.data.region);
+
         return response.data.region;
 
     } catch (error) {
