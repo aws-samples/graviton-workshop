@@ -41,7 +41,7 @@ class CdkAuroraStack(Stack):
                 enable_performance_insights=True,
                 instance_identifier="lab-intel-based-instance-1",
             ),
-            cluster_identifier="lab-intel-based",
+            cluster_identifier="aurora-lab",
             monitoring_interval=Duration.minutes(1),
             security_groups=[security_group],
             vpc=vpc,
