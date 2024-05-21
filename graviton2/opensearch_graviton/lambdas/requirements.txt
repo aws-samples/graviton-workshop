@@ -1,5 +1,5 @@
 boto3==1.24.13
 elasticsearch==7.17.4
-requests==2.31.0
+requests==2.32.0
 requests-aws4auth==1.1.2
 Faker==13.13.0
