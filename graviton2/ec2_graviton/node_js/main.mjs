@@ -22,7 +22,7 @@ const cloudformation = new CloudFormationClient({ region: awsRegion });
 //App
 const app = express();
 app.use(bodyParser.json());
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 const gravitonEc2Stack = 'GravitonID-ec2';
 const dynamoDBTableKey = 'EC2ModuleDynamoDBTable'
