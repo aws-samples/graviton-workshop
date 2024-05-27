@@ -12,7 +12,6 @@ import cluster from 'cluster';
 import os from 'os';
 
 const numCPUs = os.cpus().length;
-const awsRegion = await getAwsRegion();
 
 if (cluster.isPrimary) {
     // Fork worker processes
@@ -24,7 +23,11 @@ if (cluster.isPrimary) {
     main();
 }
 
+
 async function main() {
+
+    
+    const awsRegion = await getAwsRegion();
 
     //AWS
     const client = new DynamoDBClient({
