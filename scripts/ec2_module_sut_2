@@ -1,0 +1,10 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. SPDX-License-Identifier: MIT-0
+#!/bin/bash
+
+# Update the system
+sudo yum update -y
+
+# Prerequisites
+sudo yum install git -y
+
+# add below here the specifics for the ec2 module / langauage needed
