@@ -3,20 +3,18 @@
 #!/usr/bin/env python3
 
 import aws_cdk as cdk
-from graviton2.rds_graviton.rds_mysql_5 import CdkRds5Stack
-from graviton2.rds_graviton.rds_mysql_8 import CdkRds8Stack
-from graviton2.rds_graviton.rds_restore import CdkRdsRestoreStack
-from graviton2.vpc_base.vpc import CdkVpcStack
-from graviton2.cs_graviton.eks_graviton2 import CdkEksStack
-from graviton2.cs_graviton.ecs_graviton2 import CdkEcsStack
-from graviton2.cs_graviton.pipeline_graviton2 import CdkPipelineStack
-from graviton2.cs_graviton.pipeline_netcore_graviton2 import CdkPipelineDotNetStack
-from graviton2.opensearch_graviton.open_search import CdkOpenSearchStack
-from graviton2.perf_graviton.perf import CdkPerfStack
-
-# from graviton2.emr_graviton.emr_graviton2 import CdkEmrStack
-from graviton2.ec2_graviton.ec2 import CdkEC2Stack
-from graviton2.aurora_graviton.aurora import CdkAuroraStack
+from graviton.rds_graviton.rds_mysql_5 import CdkRds5Stack
+from graviton.rds_graviton.rds_mysql_8 import CdkRds8Stack
+from graviton.rds_graviton.rds_restore import CdkRdsRestoreStack
+from graviton.vpc_base.vpc import CdkVpcStack
+from graviton.cs_graviton.eks_graviton import CdkEksStack
+from graviton.cs_graviton.ecs_graviton import CdkEcsStack
+from graviton.cs_graviton.pipeline_graviton import CdkPipelineStack
+from graviton.cs_graviton.pipeline_netcore_graviton import CdkPipelineDotNetStack
+from graviton.opensearch_graviton.open_search import CdkOpenSearchStack
+from graviton.perf_graviton.perf import CdkPerfStack
+from graviton.ec2_graviton.ec2 import CdkEC2Stack
+from graviton.aurora_graviton.aurora import CdkAuroraStack
 
 
 class GravitonID(cdk.App):

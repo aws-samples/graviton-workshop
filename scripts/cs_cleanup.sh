@@ -5,8 +5,8 @@ aws ssm delete-parameter --name "graviton_net_container_uri"
 aws ssm delete-parameter --name "graviton_lab_container_uri"
 kubectl delete all --all -n aspnet
 kubectl delete all --all -n multiarch
-aws ecr delete-repository --repository-name graviton2-pipeline-lab --force
-aws ecr delete-repository --repository-name graviton2-aspnet-lab --force
+aws ecr delete-repository --repository-name graviton-pipeline-lab --force
+aws ecr delete-repository --repository-name graviton-aspnet-lab --force
 
 cdk destroy GravitonID-eks -f
 cdk destroy GravitonID-ecs -f

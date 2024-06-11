@@ -16,7 +16,7 @@ class CdkPipelineDotNetStack(cdk.Stack):
     def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        name = "graviton2-aspnet-lab"
+        name = "graviton-aspnet-lab"
 
         container_repository = ecr.Repository(
             scope=self,

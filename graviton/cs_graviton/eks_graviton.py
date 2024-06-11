@@ -53,7 +53,7 @@ class CdkEksStack(cdk.Stack):
             managed_policies=list(managed_node_managed_policies),
         )
 
-        self.cluster = eks.Cluster(self, "EKSGraviton2",
+        self.cluster = eks.Cluster(self, "EKSGraviton",
             version=eks.KubernetesVersion.V1_26,
             default_capacity=0,
             output_cluster_name=True,

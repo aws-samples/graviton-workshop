@@ -16,7 +16,7 @@ class CdkPipelineStack(cdk.Stack):
     def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        name = "graviton2-pipeline-lab"
+        name = "graviton-pipeline-lab"
         # ECR repositories
         container_repository = ecr.Repository(
             scope=self,
