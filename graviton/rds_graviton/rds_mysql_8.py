@@ -8,15 +8,15 @@ import os
 
 default_vpc_cidr = os.environ["DefaultRouteCidr"] 
 
-class CdkRds5Stack(cdk.Stack):
+class CdkRds8Stack(cdk.Stack):
 
     def __init__(self, scope: Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        MySQL5secgroup = ec2.SecurityGroup(self, id="MySQL5secgroup", vpc=vpc)
-        db_mysql5 = rds.DatabaseInstance(self, "MySQL5",
+        MySQL8secgroup = ec2.SecurityGroup(self, id="MySQL8secgroup", vpc=vpc)
+        db_mysql8 = rds.DatabaseInstance(self, "MySQL8",
                                              engine=rds.DatabaseInstanceEngine.mysql(
-						 version=rds.MysqlEngineVersion.of('5.7.44','5.7')
+						 version=rds.MysqlEngineVersion.of('8.0.31','8.0')
                                              ),
                                              instance_type=ec2.InstanceType("m5.4xlarge"),
                                              vpc=vpc,
@@ -24,17 +24,18 @@ class CdkRds5Stack(cdk.Stack):
                                              publicly_accessible=False,
                                              allocated_storage=100,
                                              storage_type=rds.StorageType.GP2,
-                                             cloudwatch_logs_exports=["audit", "error", "general", "slowquery"],
+                                             cloudwatch_logs_exports=["error", "general", "slowquery"],
                                              deletion_protection=False,
                                              enable_performance_insights=True,
                                              delete_automated_backups=True,
-                                             backup_retention=cdk.Duration.days(1),
-                                             security_groups=[MySQL5secgroup],
+                                             backup_retention=cdk.Duration.days(0),
+					                         security_groups=[MySQL8secgroup],
                                              parameter_group=rds.ParameterGroup.from_parameter_group_name(
                                                  self, "para-group-mysql",
-                                                 parameter_group_name="default.mysql5.7"
+                                                 parameter_group_name="default.mysql8.0"
                                              )
                                              )
-        db_mysql5.connections.allow_default_port_from(ec2.Peer.ipv4(default_vpc_cidr), "Cloud9 MySQL Access")
-        cdk.CfnOutput( self, "MySQL5RDSInstanceId", value = db_mysql5.instance_identifier)
-        cdk.CfnOutput( self, "MySQL5SecretArn", value = db_mysql5.secret.secret_arn)
+        db_mysql8.connections.allow_default_port_from(ec2.Peer.ipv4(default_vpc_cidr), "Cloud9 MySQL Access")
+
+        cdk.CfnOutput( self, "MySQL8RDSInstanceId", value = db_mysql8.instance_identifier)
+        cdk.CfnOutput( self, "MySQL8SecretArn", value = db_mysql8.secret.secret_arn)

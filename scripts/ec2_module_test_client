@@ -1,0 +1,9 @@
+#!/bin/bash
+sudo yum update -y
+sudo yum install jq git-core
+sudo yum groupinstall "Development Tools" -y
+sudo yum install openssl-devel -y
+cd ~/
+git clone https://github.com/giltene/wrk2.git
+make -C wrk2/
+sudo cp wrk2/wrk /usr/local/bin/wrk

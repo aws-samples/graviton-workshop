@@ -16,7 +16,7 @@ class CdkEcsStack(cdk.Stack):
 
 
         cluster = ecs.Cluster(
-            self, 'ECSGraviton2',
+            self, 'ECSGraviton',
             vpc=vpc,
             container_insights=True
         )

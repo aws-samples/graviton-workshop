@@ -49,7 +49,7 @@ class CdkOpenSearchStack(cdk.Stack):
 
         insert_fn = PythonFunction(self,
                        "InsertIntoIndexFunction",
-                       entry="graviton2/opensearch_graviton/lambdas",
+                       entry="graviton/opensearch_graviton/lambdas",
                        index="insert_into_index.py",
                        handler="handler",
                        runtime=_lambda.Runtime.PYTHON_3_8,
