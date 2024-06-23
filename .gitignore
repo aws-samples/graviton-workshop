@@ -12,3 +12,17 @@ cdk.out
 #workshop sub-repos
 dotnet-docker
 test_db
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+.pnpm
+.npm
+.cache

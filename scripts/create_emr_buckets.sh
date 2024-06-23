@@ -17,4 +17,4 @@ aws s3api put-object --bucket $emr_s3_name --key output/
 aws s3api put-object --bucket $emr_s3_name --key files/
 aws s3api put-object --bucket $emr_s3_name --key logs/
 
-aws s3 cp ~/environment/graviton2-workshop/scripts/tripdata.csv s3://$emr_s3_name/input/
+aws s3 cp ~/environment/graviton-workshop/scripts/tripdata.csv s3://$emr_s3_name/input/
