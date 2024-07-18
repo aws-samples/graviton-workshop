@@ -1,6 +1,6 @@
 sudo systemctl stop apt-daily.timer
 sudo apt-get update
-sudo apt-get install -y jq gettext bash-completion moreutils 
+sudo apt-get install -y jq gettext bash-completion moreutils postgresql-client-14 postgresql-client-common 
 curl -sSL -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
 chmod +x /tmp/kubectl
 sudo mv /tmp/kubectl /usr/local/bin/kubectl
