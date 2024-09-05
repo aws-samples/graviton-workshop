@@ -5,6 +5,8 @@
 import aws_cdk as cdk
 from graviton.rds_graviton.rds_mysql_5 import CdkRds5Stack
 from graviton.rds_graviton.rds_mysql_8 import CdkRds8Stack
+from graviton.rds_graviton.rds_pgsql_14 import CdkPgSQLStack
+from graviton.rds_graviton.rds_pg_restore import CdkRdsPgRestoreStack
 from graviton.rds_graviton.rds_restore import CdkRdsRestoreStack
 from graviton.vpc_base.vpc import CdkVpcStack
 from graviton.cs_graviton.eks_graviton import CdkEksStack
@@ -30,6 +32,12 @@ class GravitonID(cdk.App):
         self.rds_8_module = CdkRds8Stack(
             self, self.stack_name + "-rds-8", self.base_module.vpc
         )
+        self.rds_pg14_module = CdkPgSQLStack(
+            self, self.stack_name + "-rds-pg14", self.base_module.vpc
+        )
+        self.restore_pg_module = CdkRdsPgRestoreStack(
+            self, self.stack_name + "-rds-pg-restore",self.base_module.vpc
+        )
         self.restore_module = CdkRdsRestoreStack(
             self, self.stack_name + "-rds-restore", self.base_module.vpc
         )
@@ -45,7 +53,6 @@ class GravitonID(cdk.App):
         self.pipeline_dotnet_module = CdkPipelineDotNetStack(
             self, self.stack_name + "-pipeline-dotnet", self.base_module.vpc
         )
-        #            self.emr_module = CdkEmrStack(self, self.stack_name + "-emr", self.base_module.vpc)
         self.es_module = CdkOpenSearchStack(
             self, self.stack_name + "-os", self.base_module.vpc
         )
