@@ -35,7 +35,6 @@ table_name = None
 def get_table_name():
     global table_name
     if table_name is not None:
-        print(f'Return table name {table_name}')
         return table_name
     # Create a CloudFormation client
     cloudformation = boto3.client('cloudformation', region_name=current_region)
