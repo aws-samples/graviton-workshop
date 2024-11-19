@@ -28,11 +28,14 @@ def get_aws_region():
 
 current_region = get_aws_region()
 print(f"AWS_REGION={current_region}")
-
-
+dynamodb = boto3.resource('dynamodb', current_region)
+table_name = None
 
 
 def get_table_name():
+    global table_name
+    if table_name is not None:
+        return table_name
     # Create a CloudFormation client
     cloudformation = boto3.client('cloudformation', region_name=current_region)
 
@@ -45,7 +48,8 @@ def get_table_name():
             outputs = stack['Outputs']
             for output in outputs:
                 if output['OutputKey'] == 'EC2ModuleDynamoDBTable':
-                    return output['OutputValue']
+                    table_name = output['OutputValue']
+                    return table_name
         return None
     except Exception as e:
         return str(e)
@@ -83,15 +87,12 @@ def create_short_url(url):
     
 
 def save_in_dynamo(short_url, original_url):
-    
-    dynamodb = boto3.resource('dynamodb', current_region)
-
-    try: 
+    try:
         table_name = get_table_name()
         table = dynamodb.Table(table_name)
         # Put item in the table
         response = table.put_item(
-        Item={
+            Item={
                 'short_url': short_url,
                 'url': original_url
             }
@@ -101,4 +102,3 @@ def save_in_dynamo(short_url, original_url):
         return str(e)
 
     return response
-
