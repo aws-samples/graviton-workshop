@@ -31,7 +31,7 @@ class CdkAuroraStack(Stack):
             self,
             "AuroraPostgresCluster",
             engine=rds.DatabaseClusterEngine.aurora_postgres(
-                version=rds.AuroraPostgresEngineVersion.VER_15_2
+                version=rds.AuroraPostgresEngineVersion.VER_14_6
             ),
             writer=rds.ClusterInstance.provisioned(
                 "writer",
