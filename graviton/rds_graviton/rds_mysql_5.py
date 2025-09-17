@@ -16,7 +16,7 @@ class CdkRds5Stack(cdk.Stack):
         MySQL5secgroup = ec2.SecurityGroup(self, id="MySQL5secgroup", vpc=vpc)
         db_mysql5 = rds.DatabaseInstance(self, "MySQL5",
                                              engine=rds.DatabaseInstanceEngine.mysql(
-						 version=rds.MysqlEngineVersion.of('5.7.44','5.7')
+						 version=rds.MysqlEngineVersion.of('5.7.44-RDS.20250818','5.7')
                                              ),
                                              instance_type=ec2.InstanceType("m5.4xlarge"),
                                              vpc=vpc,

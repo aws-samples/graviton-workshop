@@ -46,7 +46,7 @@ class CdkPipelineDotNetStack(cdk.Stack):
             scope=self,
             id=f"DockerBuild_ARM64",
             environment=dict(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_ARM,
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_ARM_3,
                 privileged=True),
             environment_variables={
                 'REPO_ECR': codebuild.BuildEnvironmentVariable(

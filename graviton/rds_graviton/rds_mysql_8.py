@@ -16,7 +16,7 @@ class CdkRds8Stack(cdk.Stack):
         MySQL8secgroup = ec2.SecurityGroup(self, id="MySQL8secgroup", vpc=vpc)
         db_mysql8 = rds.DatabaseInstance(self, "MySQL8",
                                              engine=rds.DatabaseInstanceEngine.mysql(
-						 version=rds.MysqlEngineVersion.of('8.0.36','8.0')
+						 version=rds.MysqlEngineVersion.of('8.0.43','8.0')
                                              ),
                                              instance_type=ec2.InstanceType("m5.4xlarge"),
                                              vpc=vpc,

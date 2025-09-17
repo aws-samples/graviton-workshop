@@ -19,7 +19,7 @@ class CdkRdsPgRestoreStack(cdk.Stack):
         snapshot_id = ssm.StringParameter.value_for_string_parameter(self ,"graviton_rds_pg_lab_snapshot")
         g2_db_pgsql14 = rds.DatabaseInstanceFromSnapshot(self, "GravitonPgSQL14",
                                              engine=rds.DatabaseInstanceEngine.postgres(
-						 version=rds.PostgresEngineVersion.VER_14_11
+						 version=rds.PostgresEngineVersion.VER_14_19
                                              ),
                                              instance_type=ec2.InstanceType("m6g.4xlarge"),
                                              snapshot_identifier=snapshot_id,

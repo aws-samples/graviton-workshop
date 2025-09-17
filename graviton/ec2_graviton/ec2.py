@@ -26,7 +26,7 @@ class CdkEC2Stack(cdk.Stack):
         
         amzn_linux_arm= ec2.MachineImage.latest_amazon_linux2023(cpu_type=ec2.AmazonLinuxCpuType.ARM_64)
         amzn_linux_x86_64= ec2.MachineImage.latest_amazon_linux2023(cpu_type=ec2.AmazonLinuxCpuType.X86_64)
-        key_name= "gravitonKey"
+        key_pair = ec2.KeyPair.from_key_pair_name(self, "KeyPair", "gravitonKey")
         
         ec2_security_group = ec2.SecurityGroup(
             self, "Ec2SecurityGroup",
@@ -89,7 +89,7 @@ class CdkEC2Stack(cdk.Stack):
                             instance_name="EC2_Module_Test_Client1_for_SUT1",
                             machine_image=amzn_linux_x86_64,
                             vpc=vpc,
-                            key_name=key_name,
+                            key_pair=key_pair,
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
@@ -139,7 +139,7 @@ class CdkEC2Stack(cdk.Stack):
                             instance_name="EC2_Module_SUT1_x86",
                             machine_image=amzn_linux_x86_64,
                             vpc=vpc,
-                            key_name=key_name,
+                            key_pair=key_pair,
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
@@ -157,7 +157,7 @@ class CdkEC2Stack(cdk.Stack):
                             instance_name="EC2_Module_SUT2_GV2",
                             machine_image=amzn_linux_arm,
                             vpc=vpc,
-                            key_name=key_name,
+                            key_pair=key_pair,
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
@@ -175,7 +175,7 @@ class CdkEC2Stack(cdk.Stack):
                             instance_name="EC2_Module_SUT3_GV3",
                             machine_image=amzn_linux_arm,
                             vpc=vpc,
-                            key_name=key_name,
+                            key_pair=key_pair,
                             security_group=ec2_security_group,
                             vpc_subnets=ec2.SubnetSelection(
                                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),

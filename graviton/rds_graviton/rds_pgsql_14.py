@@ -16,7 +16,7 @@ class CdkPgSQLStack(cdk.Stack):
         Pgsqlsecgroup = ec2.SecurityGroup(self, id="Pgsqlsecgroup", vpc=vpc)
         pgsql_db = rds.DatabaseInstance(self, "PgSQL14",
                                              engine=rds.DatabaseInstanceEngine.postgres(
-						 version=rds.PostgresEngineVersion.VER_14_11
+						 version=rds.PostgresEngineVersion.VER_14_19
                                              ),
                                              instance_type=ec2.InstanceType("m5.4xlarge"),
                                              vpc=vpc,
