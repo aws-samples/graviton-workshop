@@ -66,7 +66,7 @@ class CdkPipelineDotNetStack(cdk.Stack):
             action_name="CodeCommit_Source",
             repository=codecommit_repo,
             output=source_output,
-            branch="master"
+            branch="main"
         )
 
         pipeline.add_stage(

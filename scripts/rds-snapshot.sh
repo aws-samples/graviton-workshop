@@ -4,7 +4,7 @@
 snapshot_uuid=`cat /dev/urandom | tr -dc 'a-z' | fold -w 16 | head -n 1`
 
 
-aws ssm delete-parameter --name "graviton_rds_lab_snapshot"
+aws ssm delete-parameter --name "graviton_rds_lab_snapshot" 2>/dev/null || true
 
 echo "Saving snapshot id using AWS Systems Manager Parameter Store"
 
